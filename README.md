@@ -23,8 +23,13 @@ Official implementation of TACO paper
  
 # TODOs:
 
-- Day1: dataset and modeling part
+- ~~Day1: dataset and modeling part~~
 - Day2: driver, retriever and trainer part
+    - retriever support data parallel and ddp
+    - trainer modify train loop to support hard negative mining instead of
+     ance pipeline in scripts
+    - multi-task algorithms in mt_trainer
+    - standard dense_trainer
 - Day3: scripts
 - Day4: reranker and extractive reader part
 - Day5: generative retrieval (CorpusBrain, Genre)
