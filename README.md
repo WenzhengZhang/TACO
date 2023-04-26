@@ -20,16 +20,56 @@ Official implementation of TACO paper
 - atlas style distillation
 - discrete retrieval (mmi, vqvae can be combined with generative retrieval or
  dense retrieval)
+# data structure
+- only save dev/test trec/results files for different hn iteration
+- save train_hn files for different hn iteration
+- overwrite embeddings for different hn iteration
+- each iteration save a single model or save a single model for different hn
+ iteration (hard-nce style)
+```
+$DATA_DIR
+    ├── data
+    │    ├── kilt
+    │    │   ├── raw
+    │    │   │   ├── tasks queries and qrels
+    │    │   │   └── collection
+    │    │   └── processed
+    │    │       ├── bm25
+    │    │       │   └── tasks
+    │    │       ├── mt
+    │    │       │   └── hn_iters
+    │    │       │       └── tasks
+    │    │       └── dr
+                     └── hn_iters
+                         └── tasks
+    │    ├── msmarco
+    │    ├── beir
+    │    ├── dpr
+    │    ├── zeshel
+    │    └── ent_qa
+    ├── plm
+    ├── model
+    ├── embeddings
+    ├── trec_predicts
+    ├── results
+    ├── logs
+    ├── metrics
+    │   ├── __init__.py
+    │   ├── beir
+    │   ├── evaluate.sh
+    │   └── trec
+
+```
  
 # TODOs:
 
 - ~~Day1: dataset and modeling part~~
-- Day2: driver, retriever and trainer part
-    - retriever support data parallel and ddp
-    - trainer modify train loop to support hard negative mining instead of
-     ance pipeline in scripts
-    - multi-task algorithms in mt_trainer
-    - standard dense_trainer
+- ~~Day2: driver, retriever and trainer part~~
+    - ~~retriever support data parallel and ddp~~
+    - ~~trainer modify train loop to support hard negative mining instead of
+     ance pipeline in scripts~~
+    - ~~multi-task algorithms in mt_trainer~~
+    - ~~standard dense_trainer~~
 - Day3: scripts
 - Day4: reranker and extractive reader part
 - Day5: generative retrieval (CorpusBrain, Genre)

@@ -157,3 +157,6 @@ b = split_list(a, '<s>', True)
 c = split_list(a, '<s>', False)
 print(b)
 print(c)
+a= 2
+b = int(2)
+print(b)

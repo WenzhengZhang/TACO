@@ -7,7 +7,8 @@ from multiprocessing import Pool
 from taco.utils import SimpleTrainPreProcessor as TrainPreProcessor
 
 
-def load_ranking(rank_file, relevance, n_sample, depth, shuffle_negs):
+# TODO: add random negatives
+def load_ranking(rank_file, relevance, num_hards, depth, shuffle_negs):
     with open(rank_file) as rf:
         lines = iter(rf)
         q_0, _, p_0, _, _, _ = next(lines).strip().split()
@@ -22,7 +23,7 @@ def load_ranking(rank_file, relevance, n_sample, depth, shuffle_negs):
                     negatives = negatives[:depth]
                     if shuffle_negs:
                         random.shuffle(negatives)
-                    yield curr_q, relevance[curr_q], negatives[:n_sample]
+                    yield curr_q, relevance[curr_q], negatives[:num_hards]
                     curr_q = q
                     negatives = [] if p in relevance[q] else [p]
                 else:
@@ -32,7 +33,7 @@ def load_ranking(rank_file, relevance, n_sample, depth, shuffle_negs):
                 negatives = negatives[:depth]
                 if shuffle_negs:
                     random.shuffle(negatives)
-                yield curr_q, relevance[curr_q], negatives[:n_sample]
+                yield curr_q, relevance[curr_q], negatives[:num_hards]
                 return
 
 
@@ -48,12 +49,14 @@ if __name__ == '__main__':
     parser.add_argument('--template', type=str, default=None)
 
     parser.add_argument('--truncate', type=int, default=128)
-    parser.add_argument('--n_sample', type=int, default=64)
+    parser.add_argument('--num_hards', type=int, default=64)
+    parser.add_argument('--num_rands', type=int, default=64)
     parser.add_argument('--depth', type=int, default=200)
     parser.add_argument('--mp_chunk_size', type=int, default=500)
     parser.add_argument('--shard_size', type=int, default=45000)
-    parser.add_argument('--shard_hn',action='store_true')
+    parser.add_argument('--shard_hn', action='store_true')
     parser.add_argument('--shuffle_negatives', action='store_true')
+    parser.add_argument('--add_rand_negs', action='store_true')
 
     args = parser.parse_args()
     random.seed(args.seed)
@@ -67,13 +70,15 @@ if __name__ == '__main__':
         tokenizer=tokenizer,
         max_length=args.truncate,
         template=args.template,
+        add_rand_negs=args.add_rand_negs,
+        num_rands=args.num_rands
     )
     counter = 0
     shard_id = 0
     f = None
     os.makedirs(args.save_to, exist_ok=True)
 
-    pbar = tqdm(load_ranking(args.hn_file, qrel, args.n_sample, args.depth,
+    pbar = tqdm(load_ranking(args.hn_file, qrel, args.num_hards, args.depth,
                              args.shuffle_negatives))
     if args.shard_hn:
         with Pool() as p:
@@ -102,4 +107,3 @@ if __name__ == '__main__':
                 for x in p.imap(processor.process_one, pbar,
                                 chunksize=args.mp_chunk_size):
                     f.write(x + '\n')
-

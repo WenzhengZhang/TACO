@@ -90,6 +90,8 @@ class SimpleTrainPreProcessor:
     title_field = 'title'
     text_field = 'text'
     template: str = None
+    add_rand_negs: bool = False
+    num_rands: int = 32
 
     def __post_init__(self):
         self.queries = self.read_queries(self.query_file)
@@ -161,6 +163,11 @@ class SimpleTrainPreProcessor:
             'positives': [self.get_passage(p) for p in pp],
             'negatives': [self.get_passage(n) for n in nn],
         }
+        if self.add_rand_negs:
+            rand_negs = sample_range_excluding(
+                len(self.collection), self.num_rands, set(pp).union(set(nn)))
+            train_example['random_negatives'] = [self.get_passage(n) for n in
+                                                 rand_negs]
 
         return json.dumps(train_example)
 
