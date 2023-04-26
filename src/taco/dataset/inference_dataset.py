@@ -195,7 +195,7 @@ class InferenceDataset:
             is_query: bool = False,
             full_tokenization: bool = True,
             mode: str = "processed",
-            stream: bool = True,
+            stream: bool = False,
             filter_fn: Callable = lambda x: True,
             cache_dir: str = None,
             is_image: bool = False,

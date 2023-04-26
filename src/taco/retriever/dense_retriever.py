@@ -9,9 +9,12 @@ import faiss
 import numpy as np
 import torch
 from torch.cuda import amp
-from torch.utils.data import DataLoader, IterableDataset
+import torch.distributed as dist
+import torch.nn as nn
+from torch.utils.data import DataLoader, IterableDataset, SequentialSampler
 from tqdm import tqdm
-from transformers.trainer_pt_utils import IterableDatasetShard
+from transformers.trainer_pt_utils import IterableDatasetShard, \
+    SequentialDistributedSampler
 
 from ..arguments import DenseEncodingArguments as EncodingArguments
 from ..dataset import EncodeCollator
@@ -20,17 +23,23 @@ from ..modeling import DenseModelForInference, DenseOutput
 logger = logging.getLogger(__name__)
 
 
+# TODO: support both DP and DDP inference
+# support both DP and DDP for doc_embedding_inference
+# only support DP for query_embedding_inference and search
+
 class Retriever:
 
     def __init__(self, model: DenseModelForInference,
-                 corpus_dataset: IterableDataset, args: EncodingArguments):
+                 corpus_dataset: IterableDataset,
+                 args: EncodingArguments):
         logger.info("Initializing retriever")
         self.model = model
         self.corpus_dataset = corpus_dataset
         self.args = args
+        # force device and distributed setup init explicitly
+        self.args._setup_devices
         self.doc_lookup = []
         self.query_lookup = []
-
         self.model = model.to(self.args.device)
         self.model.eval()
 
@@ -62,28 +71,40 @@ class Retriever:
     def doc_embedding_inference(self):
         # Note: during evaluation, there's no point in wrapping the model
         # inside a DistributedDataParallel as we'll be under `no_grad` anyways.
-        n_gpus = torch.cuda.device_count()
-        dp = (n_gpus > 1)
-        if dp:
-            logger.info('Data parallel across GPUs')
-            self.model = torch.nn.DataParallel(self.model)
+        # Multi-gpu training (should be after apex fp16 initialization)
+        if self.args.n_gpu > 1:
+            self.model = nn.DataParallel(self.model)
         if self.corpus_dataset is None:
             raise ValueError("No corpus dataset provided")
-        if self.args.world_size > 1:
-            self.corpus_dataset = IterableDatasetShard(
+        if isinstance(self.corpus_dataset, torch.utils.data.IterableDataset):
+            if self.args.world_size > 1:
+                self.corpus_dataset = IterableDatasetShard(
+                    self.corpus_dataset,
+                    batch_size=self.args.per_device_eval_batch_size,
+                    drop_last=False,
+                    num_processes=self.args.world_size,
+                    process_index=self.args.process_index
+                )
+            dataloader = DataLoader(
                 self.corpus_dataset,
-                batch_size=self.args.per_device_eval_batch_size,
-                drop_last=False,
-                num_processes=self.args.world_size,
-                process_index=self.args.process_index
+                batch_size=self.args.eval_batch_size,
+                collate_fn=EncodeCollator(),
+                num_workers=self.args.dataloader_num_workers,
+                pin_memory=self.args.dataloader_pin_memory,
             )
-        dataloader = DataLoader(
-            self.corpus_dataset,
-            batch_size=self.args.eval_batch_size,
-            collate_fn=EncodeCollator(),
-            num_workers=self.args.dataloader_num_workers,
-            pin_memory=self.args.dataloader_pin_memory,
-        )
+        else:
+            if self.args.local_rank != -1:
+                eval_sampler = SequentialSampler(self.corpus_dataset)
+            else:
+                eval_sampler = SequentialDistributedSampler(self.corpus_dataset)
+            dataloader = DataLoader(
+                self.corpus_dataset,
+                sampler=eval_sampler,
+                batch_size=self.args.eval_batch_size,
+                collate_fn=EncodeCollator(),
+                num_workers=self.args.dataloader_num_workers,
+                pin_memory=self.args.dataloader_pin_memory,
+            )
         encoded = []
         lookup_indices = []
         for (batch_ids, batch) in tqdm(dataloader,
@@ -94,7 +115,9 @@ class Retriever:
                     for k, v in batch.items():
                         batch[k] = v.to(self.args.device)
                     model_output: DenseOutput = self.model(passage=batch)
-                    encoded.append(model_output.p_reps.cpu().detach().numpy().astype('float32'))
+                    encoded.append(
+                        model_output.p_reps.cpu().detach().numpy().astype(
+                            'float32'))
         encoded = np.concatenate(encoded)
 
         os.makedirs(self.args.output_dir, exist_ok=True)
@@ -107,7 +130,7 @@ class Retriever:
         del lookup_indices
 
         if self.args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
 
     def init_index_and_add(self, partition: str = None):
         partitions = [partition] if partition is not None else glob.glob(
@@ -134,7 +157,7 @@ class Retriever:
         if args.process_index == 0:
             retriever.init_index_and_add()
         if args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
         return retriever
 
     @classmethod
@@ -152,7 +175,7 @@ class Retriever:
         if args.process_index == 0:
             retriever.init_index_and_add()
         if args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
         return retriever
 
     def reset_index(self):
@@ -162,26 +185,37 @@ class Retriever:
         self.query_lookup = []
 
     def query_embedding_inference(self, query_dataset: IterableDataset):
-        n_gpus = torch.cuda.device_count()
-        dp = (n_gpus > 1)
-        if dp:
-            logger.info('Data parallel across GPUs')
-            self.model = torch.nn.DataParallel(self.model)
-        if self.args.world_size > 1:
-            self.query_dataset = IterableDatasetShard(
+        if self.args.n_gpu > 1:
+            self.model = nn.DataParallel(self.model)
+        if isinstance(self.corpus_dataset, torch.utils.data.IterableDataset):
+            if self.args.world_size > 1:
+                self.query_dataset = IterableDatasetShard(
+                    query_dataset,
+                    batch_size=self.args.per_device_eval_batch_size,
+                    drop_last=False,
+                    num_processes=self.args.world_size,
+                    process_index=self.args.process_index
+                )
+            dataloader = DataLoader(
                 query_dataset,
-                batch_size=self.args.per_device_eval_batch_size,
-                drop_last=False,
-                num_processes=self.args.world_size,
-                process_index=self.args.process_index
+                batch_size=self.args.eval_batch_size,
+                collate_fn=EncodeCollator(),
+                num_workers=self.args.dataloader_num_workers,
+                pin_memory=self.args.dataloader_pin_memory,
             )
-        dataloader = DataLoader(
-            query_dataset,
-            batch_size=self.args.eval_batch_size,
-            collate_fn=EncodeCollator(),
-            num_workers=self.args.dataloader_num_workers,
-            pin_memory=self.args.dataloader_pin_memory,
-        )
+        else:
+            if self.args.local_rank != -1:
+                eval_sampler = SequentialSampler(self.query_dataset)
+            else:
+                eval_sampler = SequentialDistributedSampler(self.query_dataset)
+            dataloader = DataLoader(
+                self.query_dataset,
+                sampler=eval_sampler,
+                batch_size=self.args.eval_batch_size,
+                collate_fn=EncodeCollator(),
+                num_workers=self.args.dataloader_num_workers,
+                pin_memory=self.args.dataloader_pin_memory,
+            )
         encoded = []
         lookup_indices = []
         for (batch_ids, batch) in tqdm(dataloader,
@@ -205,7 +239,7 @@ class Retriever:
             pickle.dump((encoded, lookup_indices), f, protocol=4)
 
         if self.args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
 
     def search(self, topk: int = 200):
         logger.info("Searching")
@@ -242,7 +276,7 @@ class Retriever:
         if self.args.process_index == 0:
             results = self.search(topk)
         if self.args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
         return results
 
 
@@ -295,5 +329,5 @@ class SuccessiveRetriever(Retriever):
                 final_result = merge_retrieval_results_by_score(
                     [final_result, cur_result], topk)
         if self.args.world_size > 1:
-            torch.distributed.barrier()
+            dist.barrier()
         return final_result

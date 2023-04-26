@@ -12,15 +12,20 @@ import numpy as np
 from ..loss import MultiLabelLoss
 from ..utils import mean_pooling
 import torch.nn.functional as F
+from typing import Union
 
 from transformers import AutoModel, BatchEncoding, PreTrainedModel, \
     T5EncoderModel
 from transformers.modeling_outputs import ModelOutput
-from transformers.adapters import AutoAdapterModel, AdapterSetup
+try:
+    from transformers.adapters import AutoAdapterModel, AdapterSetup
+except ImportError:
+    print('if use adapter please install transformer-adapter otherwise ignore this')
 from typing import Optional, Dict, Union
 
 from ..arguments import ModelArguments, DataArguments, \
-    DenseTrainingArguments as TrainingArguments
+    DenseTrainingArguments as TrainingArguments, DenseEncodingArguments as \
+    EncodingArguments
 from ..arguments import DenseEncodingArguments as EncodingArguments
 import logging
 
@@ -95,7 +100,7 @@ class DenseModel(nn.Module):
         self.head_q = head_q
         self.head_p = head_p
         self.loss_fct = MultiLabelLoss(train_args.type_loss) if \
-            data_args.multi_label else nn.CrossEntropyLoss(reduction='mean')
+            train_args.multi_label else nn.CrossEntropyLoss(reduction='mean')
 
         self.model_args = model_args
         self.train_args = train_args
@@ -147,10 +152,6 @@ class DenseModel(nn.Module):
             q_reps = self.dist_gather_tensor(q_reps)
             p_reps = self.dist_gather_tensor(p_reps)
 
-        effective_bsz = self.train_args.per_device_train_batch_size * self.world_size \
-            if self.train_args.negatives_x_device \
-            else self.train_args.per_device_train_batch_size
-
         ### scale down scores before matmul bc we got a NaN after the matmul for T5Large+...
         if self.data_args.in_batch_negatives:
             scores = torch.matmul(q_reps, p_reps.transpose(0, 1))
@@ -165,7 +166,7 @@ class DenseModel(nn.Module):
             return None
         # print(scores.shape)
         # scores = scores.view(effective_bsz, -1)  # ???
-        if self.data_args.multi_label:
+        if self.train_args.multi_label:
             assert target is not None
             if self.data_args.in_batch_negatives:
                 target = torch.block_diag(*target)
@@ -196,8 +197,8 @@ class DenseModel(nn.Module):
         return DenseOutput(
             loss=loss,
             scores=scores,
-            q_reps=q_reps,
-            p_reps=p_reps
+            # q_reps=q_reps,
+            # p_reps=p_reps
         )
 
     def dense_encode(self, items, model, head, is_q=False):
@@ -239,7 +240,7 @@ class DenseModel(nn.Module):
 
     def encode_query(self, qry, task_name: str = None):
         head_q = self.head_q
-        if self.train_args.split_query_encoder:
+        if self.model_args.split_query_encoder:
             lm_q = self.lm_q[task_name]
             if self.model_args.add_linear_head:
                 head_q = self.head_q[task_name]
@@ -257,7 +258,7 @@ class DenseModel(nn.Module):
             cls,
             model_args: ModelArguments,
             data_args: DataArguments,
-            train_args: TrainingArguments,
+            train_args: Union[TrainingArguments, EncodingArguments],
             **hf_kwargs,
     ):
         # load local
@@ -447,7 +448,7 @@ class DenseModelForInference(DenseModel):
     @torch.no_grad()
     def encode_query(self, qry, task_name=None):
         head_q = self.head_q
-        if self.train_args.split_query_encoder:
+        if self.model_args.split_query_encoder:
             lm_q = self.lm_q[task_name]
             if self.model_args.add_linear_head:
                 head_q = self.head_q[task_name]

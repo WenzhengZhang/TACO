@@ -14,6 +14,7 @@ import regex
 from tqdm import tqdm
 import numpy as np
 import math
+
 logger = logging.getLogger()
 
 
@@ -76,6 +77,7 @@ def fill_template(template: str, data: Dict, markers: List[str] = None,
                     "Cannot find the marker '{}' in the data".format(marker))
         template = template.replace("<{}>".format(marker), str(content))
     return template
+
 
 @dataclass
 class SimpleTrainPreProcessor:
@@ -388,6 +390,15 @@ def shuffle_cycle(iterable):
     while True:
         for x in iterable:
             yield x
+
+
+def get_task_hps(input_str, num_tasks):
+    task_hps = input_str.split(',')
+    if len(task_hps) == 1 and num_tasks > 1:
+        task_hps = [int(task_hps[0])] * num_tasks
+    else:
+        task_hps = [int(h) for h in task_hps]
+    return task_hps
 
 
 class MultiTaskDataLoader:

@@ -16,6 +16,7 @@ from ..trainer import DenseTrainer
 from itertools import cycle
 import numpy as np
 import math
+from ..utils import shuffle_cycle
 
 """
 Support features:
@@ -48,9 +49,11 @@ class TrainDatasetBase:
             n_passages: int = None,
             trainer: DenseTrainer = None,
             is_eval: bool = False,
+            multi_label: bool = False,
             shuffle_seed: int = None,
             cache_dir: str = None,
-            task_name: str = None
+            task_name: str = None,
+            data_file: str = None
     ) -> None:
         self.tokenizer = tokenizer
         self.data_args = data_args
@@ -60,8 +63,9 @@ class TrainDatasetBase:
             else n_passages
         self.trainer = trainer
         self.is_eval = is_eval
+        self.multi_label = multi_label
         self.task_name = task_name
-        self._prepare_data(data_args, shuffle_seed, cache_dir)
+        self._prepare_data(data_args, shuffle_seed, cache_dir, data_file)
         if self.data_args.add_query_task_prefix or \
                 self.data_args.add_passage_task_prefix:
             self.task_prefix = self.get_task_prefix(task_name)
@@ -74,8 +78,10 @@ class TrainDatasetBase:
             add_special_tokens=False)
         return task_prefix
 
-    def _prepare_data(self, data_args, shuffle_seed, cache_dir):
-        if not self.is_eval:
+    def _prepare_data(self, data_args, shuffle_seed, cache_dir, data_file):
+        if data_file is not None:
+            self.data_files = [data_file]
+        elif not self.is_eval:
             self.data_files = [
                 data_args.train_path] if data_args.train_dir is None else glob.glob(
                 os.path.join(data_args.train_dir, "*.jsonl"))
@@ -88,8 +94,8 @@ class TrainDatasetBase:
 
 class StreamTrainDatasetMixin(IterableDataset, TrainDatasetBase):
 
-    def _prepare_data(self, data_args, shuffle_seed, cache_dir):
-        super()._prepare_data(data_args, shuffle_seed, cache_dir)
+    def _prepare_data(self, data_args, shuffle_seed, cache_dir, data_file):
+        super()._prepare_data(data_args, shuffle_seed, cache_dir, data_file)
         self.dataset = load_dataset(
             "json", data_files=self.data_files, streaming=True,
             cache_dir=cache_dir)["train"]
@@ -125,8 +131,8 @@ class StreamTrainDatasetMixin(IterableDataset, TrainDatasetBase):
 
 class MappingTrainDatasetMixin(Dataset, TrainDatasetBase):
 
-    def _prepare_data(self, data_args, shuffle_seed, cache_dir):
-        super()._prepare_data(data_args, shuffle_seed, cache_dir)
+    def _prepare_data(self, data_args, shuffle_seed, cache_dir, data_file):
+        super()._prepare_data(data_args, shuffle_seed, cache_dir, data_file)
         self.dataset = load_dataset(
             "json", data_files=self.data_files, streaming=False,
             cache_dir=cache_dir)["train"]
@@ -172,7 +178,7 @@ class DRTrainDataset(TrainDatasetBase):
             group_positives = example['positives']
             group_negatives = example['negatives']
             target = []
-            if self.data_args.multi_label:
+            if self.multi_label:
                 pos_psg = group_positives
                 negative_size = self.n_passages - len(pos_psg)
                 for pos in pos_psg:
@@ -222,7 +228,7 @@ class DRTrainDataset(TrainDatasetBase):
             assert len(encoded_passages) == self.n_passages
             model_inputs = {"query": encoded_query,
                             "passages": encoded_passages}
-            if self.data_args.multi_label:
+            if self.multi_label:
                 target += [0] * negative_size
                 model_inputs["target"] = target
 
@@ -237,3 +243,38 @@ class StreamDRTrainDataset(StreamTrainDatasetMixin, DRTrainDataset):
 
 class MappingDRTrainDataset(MappingTrainDatasetMixin, DRTrainDataset):
     pass
+
+
+class MultiTaskDataLoader:
+
+    def __init__(self, single_loaders, up_sample=True):
+        self.single_loaders = single_loaders
+        self.num_batches = [len(loader) for loader in self.single_loaders]
+        # need this for hf trainer to compute num examples
+        bsz_sum = sum(loader.batch_size for loader in single_loaders)
+        # min_idx = np.argmin(self.num_batches)
+        # max_idx = np.argmax(self.num_batches)
+        # idx = max_idx if up_sample else min_idx
+        # drop_last = single_loaders[idx].drop_last
+        num_examples = sum(len(loader.dataset) for loader in single_loaders)
+        # num_examples = len(
+        #     single_loaders[idx].dataset) * bsz_sum / self.num_batches[
+        #                    idx]
+        # num_examples = math.floor(num_examples) if drop_last else math.ceil(
+        #     num_examples)
+        self.dataset = [None] * num_examples
+        self.up_sample = up_sample
+        self.batch_size_sum = bsz_sum
+
+    def __len__(self):
+        length = max(self.num_batches) if self.up_sample else min(
+            self.num_batches)
+        return length
+
+    def __iter__(self):
+        # output batch of different tasks, might have different batch size
+        if self.up_sample:
+            return iter(zip(*(shuffle_cycle(loader) if len(loader) < max(
+                self.num_batches) else loader for loader in
+                              self.single_loaders)))
+        return iter(zip(*(loader for loader in self.single_loaders)))
