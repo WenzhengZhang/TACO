@@ -11,7 +11,7 @@ PROCESSED_DIR=$DATA_DIR"/processed/hard_nce_mt/"$weight_method
 LOG_DIR=$TACO_DIR"/logs/kilt/hard_nce_mt/"$weight_method
 EMBEDDING_DIR=$TACO_DIR"/embeddings/hard_nce_mt/"$weight_method
 RESULT_DIR=$TACO_DIR"/results/hard_nce_mt/"$weight_method
-EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
+EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR

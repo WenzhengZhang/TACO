@@ -10,7 +10,7 @@ PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 LOG_DIR=$TACO_DIR"/logs/kilt/warmup_mt/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_mt/"
 RESULT_DIR=$TACO_DIR"/results/warmup_mt/"
-EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
+EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 ANCE_PROCESSED_DIR=$DATA_DIR"/processed/ance_mt/"
 ANCE_MODEL_DIR=$TACO_DIR"/model/kilt/ance_mt/"
 mkdir -p $TACO_DIR

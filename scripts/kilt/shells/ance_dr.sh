@@ -10,7 +10,7 @@ PROCESSED_DIR=$DATA_DIR"/processed/ance_dr/"
 LOG_DIR=$TACO_DIR"/logs/kilt/ance_dr/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_dr/"
 RESULT_DIR=$TACO_DIR"/results/ance_dr/"
-EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
+EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
