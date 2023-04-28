@@ -415,17 +415,19 @@ class MultiTaskDataLoader:
         self.num_batches = [len(loader) for loader in self.single_loaders]
         # need this for hf trainer to compute num examples
         bsz_sum = sum(loader.batch_size for loader in single_loaders)
-        min_idx = np.argmin(self.num_batches)
-        max_idx = np.argmax(self.num_batches)
-        idx = max_idx if up_sample else min_idx
-        drop_last = single_loaders[idx].drop_last
-        num_examples = len(
-            single_loaders[idx].dataset) * bsz_sum / self.num_batches[
-                           idx]
-        num_examples = math.floor(num_examples) if drop_last else math.ceil(
-            num_examples)
+        # min_idx = np.argmin(self.num_batches)
+        # max_idx = np.argmax(self.num_batches)
+        # idx = max_idx if up_sample else min_idx
+        # drop_last = single_loaders[idx].drop_last
+        num_examples = sum(len(loader.dataset) for loader in single_loaders)
+        # num_examples = len(
+        #     single_loaders[idx].dataset) * bsz_sum / self.num_batches[
+        #                    idx]
+        # num_examples = math.floor(num_examples) if drop_last else math.ceil(
+        #     num_examples)
         self.dataset = [None] * num_examples
         self.up_sample = up_sample
+        self.batch_size_sum = bsz_sum
 
     def __len__(self):
         length = max(self.num_batches) if self.up_sample else min(

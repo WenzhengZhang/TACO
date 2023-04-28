@@ -31,7 +31,8 @@ if is_sagemaker_mp_enabled():
 from torch.utils.data.distributed import DistributedSampler
 from torch.utils.data.sampler import RandomSampler
 from transformers.trainer_pt_utils import DistributedSamplerWithLoop
-from ..dataset import QPCollator, MultiTaskDataLoader
+from ..dataset import QPCollator
+from ..utils import MultiTaskDataLoader
 from transformers.integrations import TensorBoardCallback, rewrite_logs, \
     hp_params
 from transformers.debug_utils import DebugOption, DebugUnderflowOverflow
