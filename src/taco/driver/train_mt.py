@@ -113,6 +113,7 @@ def main():
     tb_callback = MultiTaskTBCallback()
     trainer = MTDenseTrainer(
         model=model,
+        tokenizer=tokenizer,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
