@@ -817,7 +817,7 @@ class MTDenseTrainer(DenseTrainer):
         logger.info(f"  Num Epochs = {num_train_epochs}")
         logger.info(f" Tasks = {self.task_names}")
         logger.info(f" Task batch sizes per device = "
-                    f"{self.per_device_task_batch_sizee}")
+                    f"{self.per_device_task_batch_sizes}")
         logger.info(f" Task total batch sizes per device (w. parallel, "
                     f"distributed "
                     f"& accumulation) = {task_total_batch_sizes} ")
