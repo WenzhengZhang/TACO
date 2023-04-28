@@ -67,8 +67,8 @@ do
   fi
   max_p_len=160
   n_passage=3
-  mt_train_paths+="$delimiter"$PROCESSED_DIR/"bm25/"${kilt_set}/train.jsonl
-  mt_eval_paths+="$delimiter"$PROCESSED_DIR/"bm25/"${kilt_set}/val.jsonl
+  mt_train_paths+="$delimiter"$PROCESSED_DIR/${kilt_set}/train.jsonl
+  mt_eval_paths+="$delimiter"$PROCESSED_DIR/${kilt_set}/val.jsonl
   max_q_lens+="$delimiter"$max_q_len
   max_p_lens+="$delimiter"$max_p_len
   task_names+="$delimiter"${kilt_set^^}

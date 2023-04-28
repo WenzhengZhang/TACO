@@ -63,8 +63,8 @@ do
       --save_strategy epoch \
       --evaluation_strategy epoch \
       --logging_steps $log_step \
-      --train_path $PROCESSED_DIR/"bm25/"${kilt_set}/train.jsonl  \
-      --eval_path $PROCESSED_DIR/"bm25/"${kilt_set}/val.jsonl \
+      --train_path $PROCESSED_DIR/${kilt_set}/train.jsonl  \
+      --eval_path $PROCESSED_DIR/${kilt_set}/val.jsonl \
       --fp16  \
       --per_device_train_batch_size $bsz  \
       --train_n_passages $n_passages  \
