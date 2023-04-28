@@ -69,7 +69,7 @@ do
   if [ $kilt_set == tqa ]; then
     kilt_orig_dev="triviaqa-dev_id-kilt.jsonl"
     wget http://dl.fbaipublicfiles.com/KILT/${kilt_orig_dev}
-    python $CODE_DIR/scripts/kilt/get_kilt_tqa_raw.py --base "$RAW_DIR/"
+    python $CODE_DIR/scripts/kilt/get_kilt_tqa_raw.py --base "$RAW_DIR/${kilt_set}/"
   elif [ $kilt_set == hopo ]; then
     kilt_orig_dev="hotpotqa-dev-kilt.jsonl"
     wget http://dl.fbaipublicfiles.com/KILT/${kilt_orig_dev}
