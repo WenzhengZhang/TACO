@@ -597,6 +597,7 @@ class MTDenseTrainer(DenseTrainer):
         # return loss.detach() / self._dist_loss_scale_factor
         task_losses = [l.detach() / self._dist_loss_scale_factor for l in
                        losses]
+        task_losses = torch.tensor(task_losses).to(self.args.device)
         return loss.detach() / self._dist_loss_scale_factor, task_losses, \
                grads_norm
 
