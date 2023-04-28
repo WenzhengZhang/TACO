@@ -894,9 +894,9 @@ class MTDenseTrainer(DenseTrainer):
                 self.num_tasks).to(self.args.device)
         # _total_loss_scalar is updated everytime .item() has to be called on tr_loss and stores the sum of all losses
         self._total_loss_scalar = 0.0
-        # self._total_task_loss_scalars = [0.0 for _ in range(self.num_tasks)]
-        self._total_task_loss_scalars = torch.zeros(self.num_tasks).to(
-            self.args.device)
+        self._total_task_loss_scalars = [0.0 for _ in range(self.num_tasks)]
+        # self._total_task_loss_scalars = torch.zeros(self.num_tasks).to(
+        #     self.args.device)
         if not self.args.log_gnorm or self.args.weight_method == 'naive':
             self._total_grad_norm_scalars = None
         else:
@@ -1147,7 +1147,9 @@ class MTDenseTrainer(DenseTrainer):
         # add remaining tr_loss
         self._total_loss_scalar += tr_loss.item()
         train_loss = self._total_loss_scalar / self.state.global_step
-        self._total_task_loss_scalars += tr_task_losses
+        # self._total_task_loss_scalars += tr_task_losses
+        for i in range(self.num_tasks):
+            self._total_task_loss_scalars[i] += tr_task_losses[i].item()
         if not self.args.log_gnorm or self.args.weight_method == 'naive':
             task_grad_norms = None
         else:
@@ -1206,7 +1208,8 @@ class MTDenseTrainer(DenseTrainer):
                             self._globalstep_last_logged), 4) for t_scalar in
                 tr_loss_scalars]
             logs["losses"] = {k: l for k, l in zip(self.task_names, log_losses)}
-            self._total_task_loss_scalars += tr_loss_scalars
+            for i in range(self.num_tasks):
+                self._total_task_loss_scalars[i] += tr_loss_scalars[i]
             if tr_grad_norms is not None:
                 tr_norm_scalar = tr_grad_norms.item() if tr_grad_norms.dim() == 0 \
                     else tr_grad_norms.cpu().tolist()
