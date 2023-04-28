@@ -33,7 +33,7 @@ else
     python $CODE_DIR/scripts/scale_t5_weights.py \
         --input_model_path $PLM_DIR/t5-base \
         --output_model_path $PLM_DIR/t5-base-scaled \
-        --model_name_or_path t5-base\
+        --model_name_or_path t5-base \
         --num_layers 12
 
 fi
@@ -69,7 +69,7 @@ do
   if [ $kilt_set == tqa ]; then
     kilt_orig_dev="triviaqa-dev_id-kilt.jsonl"
     wget http://dl.fbaipublicfiles.com/KILT/${kilt_orig_dev}
-    python $CODE_DIR/scripts/kilt/get_kilt_tqa_raw.py --base "$RAW_DIR/${kilt_set}"
+    python $CODE_DIR/scripts/kilt/get_kilt_tqa_raw.py --base "$RAW_DIR/"
   elif [ $kilt_set == hopo ]; then
     kilt_orig_dev="hotpotqa-dev-kilt.jsonl"
     wget http://dl.fbaipublicfiles.com/KILT/${kilt_orig_dev}
@@ -91,7 +91,7 @@ done
 
 echo "processing kilt data ... "
 echo "process kilt sets  ... "
-if [ ! -f "$RAW_DIR/nq/train-nq-query.txt" ]; then
+if [ ! -f "$RAW_DIR/tqa/train.query.txt" ]; then
     python $CODE_DIR/scripts/kilt/process_kilt.py \
       --train_nq_file $RAW_DIR/nq/train.json \
       --train_nq_query $RAW_DIR/nq/train.query.txt \
