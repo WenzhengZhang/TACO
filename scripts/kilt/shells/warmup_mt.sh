@@ -116,7 +116,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_m
     --weight_method $mt_method \
     --select_all True \
     --multi_mix_temp 4.0 \
-    --add_query_task_prefix True \
+    --add_query_task_prefix False \
     --log_gnorm False
 
 
