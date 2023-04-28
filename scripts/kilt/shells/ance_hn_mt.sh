@@ -33,6 +33,7 @@ epoch=8
 p_len=160
 log_step=100
 n_passages=3
+n_gpu=8
 
 num_hn_iters=8
 epoch_per_hn=1

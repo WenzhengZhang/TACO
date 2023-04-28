@@ -41,6 +41,7 @@ n_gpu=8
 bsz=16
 infer_bsz=256
 steps=250
+n_gpu=8
 
 for kilt_set in ${kilt_sets[@]}
 do

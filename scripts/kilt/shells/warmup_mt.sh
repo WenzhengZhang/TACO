@@ -41,6 +41,7 @@ n_passages=3
 infer_bsz=256
 mt_method="naive"
 rands_ratio=0.5
+n_gpu=8
 
 mt_train_paths=""
 mt_eval_paths=""

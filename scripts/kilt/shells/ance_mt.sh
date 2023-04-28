@@ -27,7 +27,7 @@ kilt_sets=(nq tqa hopo wow trex fever zsre aida)
 
 SAVE_STEP=10000
 EVAL_STEP=300
-
+n_gpu=8
 eval_delay=0
 epoch=3
 p_len=160

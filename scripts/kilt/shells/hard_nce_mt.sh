@@ -43,6 +43,7 @@ bsz=16
 infer_bsz=256
 steps=250
 rands_ratio=0.5
+n_gpu=8
 
 
 

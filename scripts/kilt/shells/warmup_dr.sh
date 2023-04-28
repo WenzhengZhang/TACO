@@ -39,6 +39,7 @@ log_step=100
 bsz=16
 n_passages=3
 infer_bsz=256
+n_gpu=8
 
 cd $CODE_DIR
 export PYTHONPATH=.
