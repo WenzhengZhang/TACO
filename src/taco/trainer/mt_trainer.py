@@ -383,11 +383,16 @@ class MTDenseTrainer(DenseTrainer):
                 if self.args.norm_ipt:
                     ipt = ipt / (ipt.median(dim=-1, keepdim=True)[0] + self.eps)
                 self.ipt_exp.mul_(
-                    self.args.beta).add_(ipt, alpha=1.0 - self.args.beta)
+                    self.args.beta_taco).add_(ipt, alpha=1.0 - self.args.beta_taco)
                 if self.state.global_step < self.taco_warmup_steps:
                     new_grads = grads.sum(0)
                 else:
-                    w_scores = self.ipt_exp / self.args.tau
+                    if self.args.norm_ipt:
+                        w_scores = self.ipt_exp / self.args.tau_taco
+                    else:
+                        w_scores = self.ipt_exp / (self.ipt_exp.median(
+                            dim=-1, keepdim=True)[0] + self.eps)
+                        w_scores /= self.args.tau_taco
                     if self.args.discourage:
                         w_scores *= -1
                     gw = F.softmax(w_scores, dim=0)
@@ -471,9 +476,9 @@ class MTDenseTrainer(DenseTrainer):
                 # (T x 1)  x  (1 x T) -> T x T
                 lw = torch.matmul(losses.detach().unsqueeze(1),
                                   losses.detach().unsqueeze(0)).pow(
-                    self.args.beta)
+                    self.args.beta_cgd)
                 ri = (lw * gg).sum(-1)
-                self.ws = F.softmax((ri / self.args.tau) + self.ws.log(),
+                self.ws = F.softmax((ri / self.args.tau_cgd) + self.ws.log(),
                                     dim=-1)
             new_grads = torch.matmul(self.ws, grads)
             if self.do_grad_scaling:
@@ -523,7 +528,7 @@ class MTDenseTrainer(DenseTrainer):
                 Li = stack_losses / self.init_losses
                 # p
                 ri = Li / Li.mean()
-                constant = (G * (ri ** self.args.beta)).detach()
+                constant = (G * (ri ** self.args.beta_gn)).detach()
             L_grad = (G_per_loss - constant).abs().sum(0)
             L_grad.backward()
             loss_weight = ws.detach().clone()

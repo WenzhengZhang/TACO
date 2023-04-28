@@ -246,6 +246,10 @@ class DataArguments:
         default=False,
         metadata={"help":"is image retrieval?"}
     )
+    add_rand_negs: bool = field(
+        default=False,
+        metadata={"help":"add random negatives like hard-nce?"}
+    )
 
 
     def __post_init__(self):
@@ -285,10 +289,17 @@ class DenseTrainingArguments(TrainingArguments):
     gc_q_chunk_size: int = field(default=4)
     gc_p_chunk_size: int = field(default=32)
     multi_mix_temp: float = field(default=1.0)
-    beta: float = field(
+    beta_taco: float = field(
         default=0.5, metadata={"help": "emphasis pow"}
     )
-    tau: float = field(default=20, metadata={"help": "DRO temperature"})
+    beta_gn: float = field(
+        default=0.5, metadata={"help": "emphasis pow"}
+    )
+    beta_cgd: float = field(
+        default=0.5, metadata={"help": "emphasis pow"}
+    )
+    tau_taco: float = field(default=20, metadata={"help": "taco temperature"})
+    tau_cgd: float = field(default=20, metadata={"help": "cgd temperature"})
     norm_grad: bool = field(default=False,
                             metadata={
                                 "help": "use grad cosine similarity"})
@@ -314,7 +325,7 @@ class DenseTrainingArguments(TrainingArguments):
     momentum_ipt: bool = field(default=True, metadata={"help": "momentum ipt?"})
     momentum_softmax: bool = field(default=False,
                                    metadata={"help": "momentum softmax ?"})
-    norm_ipt: bool = field(default=False,
+    norm_ipt: bool = field(default=True,
                            metadata={"help": "norm ipt or ipt exp avg?"})
     discourage: bool = field(default=False, metadata={
         "help": "discourage sensitive parameters?"})

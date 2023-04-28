@@ -3,13 +3,13 @@ HOME_DIR="/common/users/wz283/projects/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/kilt/ance_dr/"
+MODEL_DIR=$TACO_DIR"/model/kilt/hard_nce_dr/"
 DATA_DIR=$TACO_DIR"/data/kilt/"
 RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/ance_dr/"
-LOG_DIR=$TACO_DIR"/logs/kilt/ance_dr/"
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_dr/"
-RESULT_DIR=$TACO_DIR"/results/ance_dr/"
+PROCESSED_DIR=$DATA_DIR"/processed/hard_nce_dr/"
+LOG_DIR=$TACO_DIR"/logs/kilt/hard_nce_dr/"
+EMBEDDING_DIR=$TACO_DIR"/embeddings/hard_nce_dr/"
+RESULT_DIR=$TACO_DIR"/results/hard_nce_dr/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
@@ -28,17 +28,17 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=3
+epoch=8
 p_len=160
 log_step=100
-n_passages=3
-
+n_passages=64
+rands_ratio=0.5
 num_hn_iters=8
-epoch_per_hn=3
+epoch_per_hn=1
 lr=5e-6
 dr=1
 n_gpu=8
-bsz=32
+bsz=16
 infer_bsz=256
 steps=250
 
@@ -63,7 +63,7 @@ do
         mkdir -p $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}
         python -m src.taco.driver.retrieve  \
             --output_dir $EMBEDDING_DIR/ \
-            --model_name_or_path $MODEL_DIR/${kilt_set}/hn_iter_${hn_iter} \
+            --model_name_or_path $MODEL_DIR/${kilt_set} \
             --per_device_eval_batch_size $infer_bsz  \
             --query_path $RAW_DIR/${kilt_set}/train.query.txt  \
             --encoder_only False  \
@@ -98,10 +98,14 @@ do
 
 
       echo "start hn training for ${kilt_set} for episode-${hn_iter} ..."
-
+      if [ $hn_iter != 0 ]; then
+        resume=$(ls -td $MODEL_DIR/${kilt_set}/checkpoint-* | head -1)
+      else
+        resume=False
+      fi
       torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_dr.py \
-          --output_dir $MODEL_DIR/${kilt_set}/hn_iter_${new_hn_iter}  \
-          --model_name_or_path $MODEL_DIR/${kilt_set}/hn_iter_${hn_iter}  \
+          --output_dir $MODEL_DIR/${kilt_set}  \
+          --model_name_or_path $MODEL_DIR/${kilt_set}  \
           --do_train  \
           --eval_delay $eval_delay \
           --save_strategy epoch \
@@ -116,28 +120,32 @@ do
           --q_max_len $max_q_len  \
           --p_max_len $p_len \
           --num_train_epochs $epoch  \
+          --epochs_per_hn $epoch_per_hn \
           --logging_dir $LOG_DIR/${kilt_set}/hn_iter_${hn_iter}  \
           --negatives_x_device True \
           --remove_unused_columns False \
           --overwrite_output_dir True \
           --dataloader_num_workers 0 \
           --multi_label False \
-          --in_batch_negatives True \
+          --in_batch_negatives False \
           --pooling first \
           --positive_passage_no_shuffle True \
           --negative_passage_no_shuffle True \
-          --add_rand_negs False \
+          --add_rand_negs True \
           --encoder_only False \
           --save_total_limit 2 \
-          --load_best_model_at_end True \
-          --metric_for_best_model loss
+          --load_best_model_at_end False \
+          --metric_for_best_model loss \
+          --hard_negative_mining True \
+          --rands_ratio $rands_ratio \
+          --resume_from_checkpoint $resume
 
       echo "evaluating ${kilt_set} for episode-${hn_iter} ..."
       echo "building index for ${kilt_set} for episode-${hn_iter} "
       #  python src/taco/driver/build_index.py  \
       torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $MODEL_DIR/${kilt_set}/hn_iter_${new_hn_iter} \
+          --model_name_or_path $MODEL_DIR/${kilt_set} \
           --per_device_eval_batch_size $infer_bsz  \
           --corpus_path $RAW_DIR/corpus/psg_corpus.tsv  \
           --encoder_only False  \
@@ -155,7 +163,7 @@ do
 
       python -m src.taco.driver.retrieve  \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $MODEL_DIR/${kilt_set}/hn_iter_${new_hn_iter} \
+          --model_name_or_path $MODEL_DIR/${kilt_set} \
           --per_device_eval_batch_size $infer_bsz  \
           --query_path $RAW_DIR/${kilt_set}/dev.query.txt  \
           --encoder_only False  \

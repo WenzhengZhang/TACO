@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import torch.nn.functional as F
 from scipy.stats import entropy
+import shutil
 import random
 import time
 import datasets
@@ -587,8 +588,19 @@ class DenseTrainer(Trainer):
 
         self.log(metrics)
 
-        self.control = self.callback_handler.on_train_end(args, self.state,
-                                                          self.control)
+        run_dir = self._get_output_dir(trial)
+        checkpoints_sorted = self._sorted_checkpoints(use_mtime=False, output_dir=run_dir)
+
+        # Delete the last checkpoint when save_total_limit=1 if it's different from the best checkpoint and process allowed to save.
+        if self.args.should_save and self.state.best_model_checkpoint is not \
+                None and self.args.save_total_limit == 1 and \
+                self.is_world_process_zero():
+            for checkpoint in checkpoints_sorted:
+                if checkpoint != self.state.best_model_checkpoint:
+                    logger.info(f"Deleting older checkpoint [{checkpoint}] due to args.save_total_limit")
+                    shutil.rmtree(checkpoint)
+
+        self.control = self.callback_handler.on_train_end(args, self.state, self.control)
 
         return TrainOutput(self.state.global_step, train_loss, metrics)
 

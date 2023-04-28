@@ -4,13 +4,13 @@ HOME_DIR="/common/users/wz283/projects/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/kilt/ance_mt/"$weight_method
+MODEL_DIR=$TACO_DIR"/model/kilt/hard_nce_mt/"$weight_method
 DATA_DIR=$TACO_DIR"/data/kilt/"
 RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/ance_mt/"$weight_method
-LOG_DIR=$TACO_DIR"/logs/kilt/ance_mt/"$weight_method
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/"$weight_method
-RESULT_DIR=$TACO_DIR"/results/ance_mt/"$weight_method
+PROCESSED_DIR=$DATA_DIR"/processed/hard_nce_mt/"$weight_method
+LOG_DIR=$TACO_DIR"/logs/kilt/hard_nce_mt/"$weight_method
+EMBEDDING_DIR=$TACO_DIR"/embeddings/hard_nce_mt/"$weight_method
+RESULT_DIR=$TACO_DIR"/results/hard_nce_mt/"$weight_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
@@ -29,17 +29,17 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=3
+epoch=8
 p_len=160
 log_step=100
-n_passages=3
+n_passages=64
 
 num_hn_iters=8
-epoch_per_hn=3
+epoch_per_hn=1
 lr=5e-6
 dr=1
 n_gpu=8
-bsz=64
+bsz=16
 infer_bsz=256
 steps=250
 rands_ratio=0.5
@@ -49,6 +49,11 @@ rands_ratio=0.5
 for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iters++))
 do
   echo "ance episode $hn_iter"
+  if [ $hn_iter != 0 ]; then
+    resume=$(ls -td $MODEL_DIR/checkpoint-* | head -1)
+  else
+    resume=False
+  fi
   let new_hn_iter=$hn_iter+1
   mt_train_paths=""
   mt_eval_paths=""
@@ -73,7 +78,7 @@ do
       max_q_len=32
     fi
     max_p_len=160
-    n_passage=3
+    n_passage=64
     mt_train_paths+="$delimiter"$PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train.jsonl
     mt_eval_paths+="$delimiter"$PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/val.jsonl
     max_q_lens+="$delimiter"$max_q_len
@@ -89,7 +94,7 @@ do
       mkdir -p $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}
       python -m src.taco.driver.retrieve  \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter} \
+          --model_name_or_path $MODEL_DIR/ \
           --per_device_eval_batch_size $infer_bsz  \
           --query_path $RAW_DIR/${kilt_set}/train.query.txt  \
           --encoder_only False  \
@@ -127,8 +132,8 @@ do
   echo "start hn training for for episode-${hn_iter} ..."
 
   torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
-      --output_dir $MODEL_DIR/hn_iter_${new_hn_iter}  \
-      --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter}  \
+      --output_dir $MODEL_DIR  \
+      --model_name_or_path $MODEL_DIR  \
       --do_train  \
       --eval_delay $eval_delay \
       --save_strategy epoch \
@@ -150,14 +155,14 @@ do
       --overwrite_output_dir True \
       --dataloader_num_workers 0 \
       --multi_label False \
-      --in_batch_negatives True \
+      --in_batch_negatives False \
       --pooling first \
       --positive_passage_no_shuffle True \
       --negative_passage_no_shuffle True \
-      --add_rand_negs False \
+      --add_rand_negs True \
       --encoder_only False \
       --save_total_limit 2 \
-      --load_best_model_at_end True \
+      --load_best_model_at_end False \
       --metric_for_best_model loss \
       --up_sample True \
       --weight_method $mt_method \
@@ -171,14 +176,17 @@ do
       --beta_cgd 0.25 \
       --tau_cgd 100 \
       --norm_grad True \
-      --norm_ipt True
+      --norm_ipt True \
+      --hard_negative_mining True \
+      --rands_ratio $rands_ratio \
+      --resume_from_checkpoint $resume
 
   echo "evaluating for episode-${hn_iter} ..."
   echo "building index for  episode-${hn_iter} "
   #  python src/taco/driver/build_index.py  \
   torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
-      --model_name_or_path $MODEL_DIR/hn_iter_${new_hn_iter} \
+      --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
       --corpus_path $RAW_DIR/corpus/psg_corpus.tsv  \
       --encoder_only False  \
@@ -211,7 +219,7 @@ do
 
     python -m src.taco.driver.retrieve  \
         --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR/hn_iter_${new_hn_iter} \
+        --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
         --query_path $RAW_DIR/${kilt_set}/dev.query.txt  \
         --encoder_only False  \

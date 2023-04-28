@@ -439,13 +439,13 @@ RESOURCES_MAP = {
                                 "compressed": True,
                                 "desc": "Kilt HotpotQA dev data",
                                             },
-    "data.retriever.kilt-trivaqa-train": {
+    "data.retriever.kilt-triviaqa-train": {
                                     "s3_url": "https://dl.fbaipublicfiles.com/ur/data/retriever/triviaqa-train-multikilt.json.gz",
                                     "original_ext": ".json",
                                     "compressed": True,
                                     "desc": "Kilt TriviaQA train data",
                                                 },
-    "data.retriever.kilt-trivaqa-dev": {
+    "data.retriever.kilt-triviaqa-dev": {
                                     "s3_url": "https://dl.fbaipublicfiles.com/ur/data/retriever/triviaqa-dev-multikilt.json.gz",
                                     "original_ext": ".json",
                                     "compressed": True,

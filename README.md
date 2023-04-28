@@ -32,16 +32,21 @@ $DATA_DIR
     │    ├── kilt
     │    │   ├── raw
     │    │   │   ├── tasks queries and qrels
-    │    │   │   └── collection
+    │    │   │   └── corpus
     │    │   └── processed
     │    │       ├── bm25
     │    │       │   └── tasks
     │    │       ├── mt
-    │    │       │   └── hn_iters
-    │    │       │       └── tasks
+    │    │       │   └── mt_methods
+                         ├── add_prefix
+                             └── hn_iters
+                                 └── tasks
+                         └── no_prefix   
+    │    │       │           └── hn_iters
+                                 └── tasks
     │    │       └── dr
-                     └── hn_iters
-                         └── tasks
+                     └── tasks
+                         └── hn_iters
     │    ├── msmarco
     │    ├── beir
     │    ├── dpr

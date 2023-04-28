@@ -88,7 +88,7 @@ if __name__ == '__main__':
                 if f is None:
                     f = open(
                         os.path.join(args.save_to,
-                                     f'split{shard_id:02d}.hn.jsonl'),
+                                     f'train.split{shard_id:02d}.jsonl'),
                         'w')
                     pbar.set_description(f'split - {shard_id:02d}')
                 f.write(x + '\n')
@@ -102,7 +102,7 @@ if __name__ == '__main__':
         if f is not None:
             f.close()
     else:
-        with open(os.path.join(args.save_to, 'train.hn.jsonl'), 'w') as f:
+        with open(os.path.join(args.save_to, 'train_all.jsonl'), 'w') as f:
             with Pool() as p:
                 for x in p.imap(processor.process_one, pbar,
                                 chunksize=args.mp_chunk_size):

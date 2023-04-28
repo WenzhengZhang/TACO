@@ -194,7 +194,8 @@ class DRTrainDataset(TrainDatasetBase):
                     (hashed_seed + epoch) % len(group_positives)]
                 negative_size = self.n_passages - 1
                 encoded_passages.append(self.create_one_example(pos_psg))
-            if 'random_negatives' not in example:
+            if not self.data_args.add_rand_negs or 'random_negatives' not in \
+                    example:
                 rand_negatives = []
                 num_hard = negative_size
             else:
