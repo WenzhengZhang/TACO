@@ -647,6 +647,9 @@ class DenseTrainer(Trainer):
 
         return TrainOutput(self.state.global_step, train_loss, metrics)
 
+    def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
+        logger.info(f"Loading model from {resume_from_checkpoint}.")
+
 
 def split_dense_inputs(model_input: dict, chunk_size: int):
     assert len(model_input) == 1
