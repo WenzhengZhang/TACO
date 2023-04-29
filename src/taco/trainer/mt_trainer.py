@@ -546,8 +546,8 @@ class MTDenseTrainer(DenseTrainer):
         return loss, grads_norm
 
     def uw_backward(self, losses, model):
-        # loss = sum(losses)
-        loss = torch.matmul(self.ws * self.num_tasks, torch.stack(losses))
+        loss = sum(losses)
+        # loss = torch.matmul(self.ws * self.num_tasks, torch.stack(losses))
         grads = self.get_grads(losses, model)
         grads_norm = None
         if self.args.log_gnorm:
