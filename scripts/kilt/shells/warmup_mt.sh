@@ -119,7 +119,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_m
     --multi_mix_temp 4.0 \
     --add_query_task_prefix False \
     --log_gnorm False \
-    --resume_from_checkpoint $MODEL_DIR/checkpoint-8292
+    --resume_from_checkpoint $MODEL_DIR/checkpoint-33168
 
 
 
