@@ -166,7 +166,9 @@ class MTDenseTrainer(DenseTrainer):
             if param.data is not None:
                 beg = 0 if i == 0 else self.grad_idx_cumsum[i - 1]
                 end = self.grad_idx_cumsum[i]
-                ps[beg:end] = (param.data.view(-1)*grads[beg:end]).abs()
+                assert len(param.data.view(-1)) == end-beg
+                ps[beg:end] = (param.data.view(-1)*grads[beg:end].view(
+                    -1)).abs()
         return ps
 
     def grad2vec(self):
