@@ -377,7 +377,7 @@ class DenseTrainingArguments(TrainingArguments):
 
 
 @dataclass
-class DenseEncodingArguments(TrainingArguments):
+class DenseEncodingArguments(DenseTrainingArguments):
     use_gpu: bool = field(default=False,
                           metadata={"help": "Use GPU for encoding"})
     encoded_save_path: str = field(default=None, metadata={
