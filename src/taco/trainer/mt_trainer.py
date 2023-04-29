@@ -187,12 +187,13 @@ class MTDenseTrainer(DenseTrainer):
                 model.reducer.prepare_for_backward(out_tensors)
             if (t + 1) != self.num_tasks:
                 if self.do_grad_scaling:
-                    self.scaler.scale(losses[t]).backward()
+                    self.scaler.scale(losses[t]).backward(retain_graph=True)
                 elif self.deepspeed:
                     # loss gets scaled under gradient_accumulation_steps in deepspeed
-                    losses[t] = self.deepspeed.backward(losses[t])
+                    losses[t] = self.deepspeed.backward(losses[t],
+                                                        retain_graph=True)
                 else:
-                    losses[t].backward()
+                    losses[t].backward(retain_graph=True)
             else:
                 if self.do_grad_scaling:
                     self.scaler.scale(losses[t]).backward()
@@ -330,11 +331,16 @@ class MTDenseTrainer(DenseTrainer):
                                     enumerate(eval_dataset)],
                                    self.up_sample)
 
-    def compute_loss(self, model, inputs, return_outputs=False):
+    def compute_loss(self, model, inputs, return_outputs=False,
+                     return_grads=False):
         # each task has query, passage input
+        # TODO: get loss grads here
         losses = []
         if return_outputs:
             outputs = []
+        if return_grads:
+            grads = torch.zeros(self.num_tasks,
+                                self.grad_dim).to(self.args.device)
         assert len(inputs) == self.num_tasks
         for i, task_inputs in enumerate(inputs):
             if self.args.multi_label:
@@ -351,15 +357,33 @@ class MTDenseTrainer(DenseTrainer):
             losses.append(single_outputs.loss)
             if return_outputs:
                 outputs.append(single_outputs)
+            if return_grads:
+                if self.do_grad_scaling:
+                    self.scaler.scale(single_outputs.loss).backward()
+                elif self.deepspeed:
+                    # loss gets scaled under gradient_accumulation_steps in deepspeed
+                    single_outputs.loss = self.deepspeed.backward(
+                        single_outputs.loss)
+                else:
+                    single_outputs.loss.backward()
+                # self.clip_select_grads(max_grad_norm)
+                grads[i] = self.grad2vec()
+                # can't do zero_grad because if gradient accumulation
+                model.zero_grad()
         if return_outputs:
             outputs = [losses] + outputs
-        return (losses, outputs) if return_outputs else losses
+        if return_grads:
+            return (losses, outputs, grads) if return_outputs else (
+                losses, grads)
+        else:
+            return (losses, outputs) if return_outputs else losses
 
-    def taco_backward(self, losses, model):
-        losses = torch.stack(losses)
-        # T x p
-        grads = self.get_grads(losses,
-                               model)
+    def taco_backward(self, losses, model, grads=None):
+        if grads is None:
+            losses = torch.stack(losses)
+            # T x p
+            grads = self.get_grads(losses,
+                                   model)
         with torch.no_grad():
             if self.do_grad_scaling:
                 grads = self.unscale_grads(grads)
@@ -564,7 +588,8 @@ class MTDenseTrainer(DenseTrainer):
         model.train()
         inputs = self._prepare_inputs(inputs)
         with self.compute_loss_context_manager():
-            losses = self.compute_loss(model, inputs)
+            losses, _, grads = self.compute_loss(model, inputs,
+                                                 return_grads=True)
         assert len(losses) == self.num_tasks
 
         if self.args.n_gpu > 1:
@@ -591,7 +616,7 @@ class MTDenseTrainer(DenseTrainer):
         elif self.args.weight_method == 'uw':
             loss, grads_norm = self.uw_backward(losses, model)
         elif self.args.weight_method == 'taco':
-            loss, grads_norm = self.taco_backward(losses, model)
+            loss, grads_norm = self.taco_backward(losses, model, grads)
         elif self.args.weight_method == 'gn':
             loss, grads_norm = self.gn_backward(losses, model)
         else:
