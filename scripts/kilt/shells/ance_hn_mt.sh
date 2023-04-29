@@ -180,7 +180,8 @@ do
       --norm_ipt True \
       --hard_negative_mining True \
       --rands_ratio $rands_ratio \
-      --resume_from_checkpoint $resume
+      --resume_from_checkpoint $resume \
+      --ddp_find_unused_parameters False
 
   echo "evaluating for episode-${hn_iter} ..."
   echo "building index for  episode-${hn_iter} "
