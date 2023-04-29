@@ -425,7 +425,10 @@ class MTDenseTrainer(DenseTrainer):
                     if self.args.discourage:
                         w_scores *= -1
                     # gw = F.softmax(w_scores, dim=0)
-                    new_grads = (w_scores.softmax(dim=0) * grads).sum(0)
+                    new_grads = torch.einsum('ij,ij->j',
+                                             w_scores.log_softmax(0).exp(),
+                                             grads)
+                    # new_grads = (w_scores.softmax(dim=0) * grads).sum(0)
                 if self.do_grad_scaling:
                     new_grads = self.scale_grads(new_grads)
                 self.reset_grads(new_grads)
