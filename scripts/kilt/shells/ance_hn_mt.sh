@@ -29,13 +29,13 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=8
+epoch=4
 p_len=160
 log_step=100
 n_passages=3
 n_gpu=8
 
-num_hn_iters=8
+num_hn_iters=4
 epoch_per_hn=1
 lr=5e-6
 dr=1
