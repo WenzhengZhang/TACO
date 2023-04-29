@@ -872,6 +872,7 @@ class MTDenseTrainer(DenseTrainer):
             target_epochs = num_train_epochs
 
         for epoch in range(epochs_trained, target_epochs):
+            logger.info(f"target epoch stop {target_epochs}")
             if isinstance(train_dataloader, DataLoader) and isinstance(
                     train_dataloader.sampler, DistributedSampler):
                 train_dataloader.sampler.set_epoch(epoch)
