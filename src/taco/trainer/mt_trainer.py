@@ -187,13 +187,12 @@ class MTDenseTrainer(DenseTrainer):
                 model.reducer.prepare_for_backward(out_tensors)
             if (t + 1) != self.num_tasks:
                 if self.do_grad_scaling:
-                    self.scaler.scale(losses[t]).backward(retain_graph=True)
+                    self.scaler.scale(losses[t]).backward()
                 elif self.deepspeed:
                     # loss gets scaled under gradient_accumulation_steps in deepspeed
-                    losses[t] = self.deepspeed.backward(losses[t],
-                                                        retain_graph=True)
+                    losses[t] = self.deepspeed.backward(losses[t])
                 else:
-                    losses[t].backward(retain_graph=True)
+                    losses[t].backward()
             else:
                 if self.do_grad_scaling:
                     self.scaler.scale(losses[t]).backward()
