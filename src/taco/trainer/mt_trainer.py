@@ -218,6 +218,27 @@ class MTDenseTrainer(DenseTrainer):
                 param.grad.data = new_grads[beg:end].contiguous().view(
                     param.data.size()).data.clone()
 
+    def reset_taco_grads(self, grads):
+        if self.args.norm_ipt:
+            w_scores = self.ipt_exp / self.args.tau_taco
+        else:
+            w_scores = self.ipt_exp / (self.ipt_exp.median(
+                dim=-1, keepdim=True)[0] + self.eps)
+            w_scores /= self.args.tau_taco
+        if self.args.discourage:
+            w_scores *= -1
+        if self.do_grad_scaling:
+            grads = self.scale_grads(grads)
+        for i, (name, param) in enumerate(self.model.named_parameters()):
+            if param.grad is not None:
+                beg = 0 if i == 0 else self.grad_idx_cumsum[i - 1]
+                end = self.grad_idx_cumsum[i]
+
+                param.grad.data = (
+                        grads[:, beg:end] * w_scores[:, beg:end].softmax(
+                    dim=0)).sum(0).contiguous().view(
+                    param.data.size()).data.clone()
+
     def get_task_collators(self):
         collators = [QPCollator(
             self.tokenizer,
@@ -415,23 +436,11 @@ class MTDenseTrainer(DenseTrainer):
                                               alpha=1.0 - self.args.beta_taco)
                 if self.state.global_step < 10:
                     new_grads = grads.sum(0)
+                    if self.do_grad_scaling:
+                        new_grads = self.scale_grads(new_grads)
+                    self.reset_grads(new_grads)
                 else:
-                    if self.args.norm_ipt:
-                        w_scores = self.ipt_exp / self.args.tau_taco
-                    else:
-                        w_scores = self.ipt_exp / (self.ipt_exp.median(
-                            dim=-1, keepdim=True)[0] + self.eps)
-                        w_scores /= self.args.tau_taco
-                    if self.args.discourage:
-                        w_scores *= -1
-                    # gw = F.softmax(w_scores, dim=0)
-                    new_grads = torch.einsum('ij,ij->j',
-                                             w_scores.log_softmax(0).exp(),
-                                             grads)
-                    # new_grads = (w_scores.softmax(dim=0) * grads).sum(0)
-                if self.do_grad_scaling:
-                    new_grads = self.scale_grads(new_grads)
-                self.reset_grads(new_grads)
+                    self.reset_taco_grads(grads)
                 loss = sum(losses)
         return loss, grads_norm
 

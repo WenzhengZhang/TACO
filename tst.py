@@ -161,3 +161,13 @@ print(c)
 a= 2
 b = int(2)
 print(b)
+
+a = torch.randn((3,8))
+b = torch.randn((3,8))
+c = (a.softmax(0)*b).sum(0)
+print(c)
+a_chunk = a.unfold(0,2,2)
+b_chunk = b.unfold(0,2,2)
+d = (a_chunk.softmax(0)*b_chunk).sum(0)
+print(d)
+
