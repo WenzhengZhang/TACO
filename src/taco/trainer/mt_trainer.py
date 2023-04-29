@@ -420,7 +420,6 @@ class MTDenseTrainer(DenseTrainer):
                 if self.do_grad_scaling:
                     new_grads = self.scale_grads(new_grads)
                 self.reset_grads(new_grads / self.num_tasks)
-                loss = sum(losses) / self.num_tasks
             else:
                 taco_warmup_steps = int(self.state.max_steps *
                                         self.args.warmup_ratio)
@@ -441,7 +440,7 @@ class MTDenseTrainer(DenseTrainer):
                     self.reset_grads(new_grads)
                 else:
                     self.reset_taco_grads(grads)
-                loss = sum(losses)
+            loss = sum(losses)
         return loss, grads_norm
 
     def pcg_backward(self, losses, model, grads=None):

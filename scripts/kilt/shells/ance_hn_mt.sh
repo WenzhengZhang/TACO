@@ -32,7 +32,7 @@ eval_delay=0
 epoch=4
 p_len=160
 log_step=100
-n_passages=3
+n_passages=2
 n_gpu=8
 
 num_hn_iters=4
