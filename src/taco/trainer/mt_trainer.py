@@ -160,13 +160,13 @@ class MTDenseTrainer(DenseTrainer):
             grad_index.append(param.data.numel())
         return np.cumsum(grad_index)
 
-    def param2vec(self):
+    def get_ipt_vec(self, grads):
         ps = torch.zeros(self.grad_dim).to(self.args.device)
         for i, (name, param) in enumerate(self.model.named_parameters()):
             if param.data is not None:
                 beg = 0 if i == 0 else self.grad_idx_cumsum[i - 1]
                 end = self.grad_idx_cumsum[i]
-                ps[beg:end] = param.data.view(-1)
+                ps[beg:end] = (param.data.view(-1)*grads[beg:end]).abs()
         return ps
 
     def grad2vec(self):
@@ -404,8 +404,8 @@ class MTDenseTrainer(DenseTrainer):
                 # logger.info(f'warmup steps {taco_warmup_steps}')
                 # with torch.no_grad():
                 #     # T x p
-                ipt = self.param2vec()
-                ipt = (grads * ipt).abs()
+                ipt = self.get_ipt_vec(grads)
+                # ipt = (grads * ipt).abs()
                 if self.args.norm_ipt:
                     ipt = ipt / (ipt.median(dim=-1, keepdim=True)[0] + self.eps)
                 self.ipt_exp.mul_(
