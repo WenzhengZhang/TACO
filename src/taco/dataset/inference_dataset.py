@@ -324,17 +324,17 @@ class StreamJsonlDataset(StreamInferenceDataset, InferenceDataset):
 class MappingJsonlDataset(MappingInferenceDataset, InferenceDataset):
 
     def _prepare_data(self, data_args):
-        hf_dataset = load_dataset(
+        self.dataset = load_dataset(
             "json",
             data_files=self.data_files,
-            streaming=True,
+            streaming=False,
             cache_dir=self.cache_dir
         )["train"].filter(self.filter_fn)
-        sample = list(hf_dataset.take(1))[0]
+        sample = self.dataset[0]
         self.all_columns = sample.keys()
-        self.dataset = {}
-        for item in hf_dataset:
-            self.dataset[get_idx(item)] = item
+        # self.dataset = {}
+        # for item in hf_dataset:
+        #     self.dataset[get_idx(item)] = item
 
 
 class StreamTsvDataset(StreamInferenceDataset, InferenceDataset):
@@ -359,17 +359,25 @@ class MappingTsvDataset(MappingInferenceDataset, InferenceDataset):
         self.all_columns = data_args.query_column_names if self.is_query else data_args.doc_column_names
         if self.all_columns is not None:
             self.all_columns = self.all_columns.split(',')
-        hf_dataset = load_dataset(
+        self.dataset = load_dataset(
             "csv",
             data_files=self.data_files,
-            streaming=True,
+            streaming=False,
             column_names=self.all_columns,
             delimiter='\t',
             cache_dir=self.cache_dir
         )["train"].filter(self.filter_fn)
-        self.dataset = {}
-        for item in hf_dataset:
-            self.dataset[get_idx(item)] = item
+        if self.all_columns is None:
+            sample = self.dataset[0]
+            self.all_columns = sample.keys()
+        if 'id' not in self.all_columns:
+            ids = list(range(len(self.dataset)))
+            self.dataset = self.dataset.add_column('id', ids)
+            self.all_columns = ['id'] + self.all_columns
+
+        # self.dataset = {}
+        # for item in hf_dataset:
+        #     self.dataset[get_idx(item)] = item
 
 
 class StreamImageDataset(StreamInferenceDataset, InferenceDataset):

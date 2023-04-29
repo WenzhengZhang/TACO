@@ -70,13 +70,13 @@ do
       delimiter=","
     fi
     if [ ${kilt_set} == wow ]; then
-      max_q_len=256
+      max_q_len=260
     elif [ ${kilt_set} == fever ]; then
-      max_q_len=64
+      max_q_len=68
     elif [ ${kilt_set} == aida ]; then
-      max_q_len=128
+      max_q_len=132
     else
-      max_q_len=32
+      max_q_len=36
     fi
     max_p_len=160
     n_passage=3
