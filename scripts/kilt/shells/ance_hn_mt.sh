@@ -32,7 +32,7 @@ eval_delay=0
 epoch=4
 p_len=160
 log_step=100
-n_passages=3
+n_passages=2
 n_gpu=8
 
 num_hn_iters=4
@@ -40,7 +40,7 @@ epoch_per_hn=1
 lr=5e-6
 dr=1
 n_gpu=8
-bsz=16
+bsz=32
 infer_bsz=256
 steps=250
 rands_ratio=0.5
