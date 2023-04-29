@@ -86,6 +86,7 @@ support features:
 # taco warmup steps calculated in init
 # TODO: if hard negative mining style training, can we only warmup for the
 #  first epoch for taco?
+# TODO: ipt_exp should also be resumed for hn training
 
 
 class MTDenseTrainer(DenseTrainer):
