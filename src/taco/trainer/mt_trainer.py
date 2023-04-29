@@ -588,8 +588,8 @@ class MTDenseTrainer(DenseTrainer):
         model.train()
         inputs = self._prepare_inputs(inputs)
         with self.compute_loss_context_manager():
-            losses, _, grads = self.compute_loss(model, inputs,
-                                                 return_grads=True)
+            losses, grads = self.compute_loss(model, inputs,
+                                              return_grads=True)
         assert len(losses) == self.num_tasks
 
         if self.args.n_gpu > 1:
