@@ -4,13 +4,13 @@ HOME_DIR="/common/users/wz283/projects/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/kilt/ance_hn_mt/"$weight_method
+MODEL_DIR=$TACO_DIR"/model/kilt/ance_hn_mt/"$mt_method
 DATA_DIR=$TACO_DIR"/data/kilt/"
 RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/ance_hn_mt/"$weight_method
-LOG_DIR=$TACO_DIR"/logs/kilt/ance_hn_mt/"$weight_method
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_hn_mt/"$weight_method
-RESULT_DIR=$TACO_DIR"/results/ance_hn_mt/"$weight_method
+PROCESSED_DIR=$DATA_DIR"/processed/ance_hn_mt/"$mt_method
+LOG_DIR=$TACO_DIR"/logs/kilt/ance_hn_mt/"$mt_method
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_hn_mt/"$mt_method
+RESULT_DIR=$TACO_DIR"/results/ance_hn_mt/"$mt_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
