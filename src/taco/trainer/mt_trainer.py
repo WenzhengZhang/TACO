@@ -430,8 +430,12 @@ class MTDenseTrainer(DenseTrainer):
                 loss = sum(losses)
         return loss, grads_norm
 
-    def pcg_backward(self, losses, model):
-        grads = self.get_grads(losses, model)
+    def pcg_backward(self, losses, model, grads=None):
+        if grads is None:
+            # T x p
+            grads = self.get_grads(losses,
+                                   model)
+        # grads = self.get_grads(losses, model)
         if self.do_grad_scaling:
             grads = self.unscale_grads(grads)
         # grads_norm = grads.norm(dim=-1)
@@ -468,11 +472,13 @@ class MTDenseTrainer(DenseTrainer):
         loss = sum(losses) / self.num_tasks
         return loss, grads_norm
 
-    def cgd_backward(self, losses, model):
+    def cgd_backward(self, losses, model, grads=None):
         losses = torch.stack(losses)
+        if grads is None:
+            # T x p
+            grads = self.get_grads(losses,
+                                   model)
         # T x p
-        grads = self.get_grads(losses,
-                               model)
         if self.do_grad_scaling:
             grads = self.unscale_grads(grads)
         # grads_norm = grads.norm(dim=-1, keepdim=True)
@@ -518,7 +524,7 @@ class MTDenseTrainer(DenseTrainer):
             grads_norm = grads_norm.view(-1)
         return loss, grads_norm
 
-    def gn_backward(self, losses, model):
+    def gn_backward(self, losses, model, grads=None):
         # 1. get grads_t for tasks T x p
         # 2. get r_t = (loss_t/loss_t(0) / avg(loss_t/loss_t(0))
         # 3. grads_avg = avg_t(grads)
@@ -527,7 +533,11 @@ class MTDenseTrainer(DenseTrainer):
         # 6. backward again to compute gradients of w_i
         # T x p
         ws = self.num_tasks * F.softmax(self.ws, dim=-1)
-        grads = self.get_grads(losses, model)
+        if grads is None:
+            # T x p
+            grads = self.get_grads(losses,
+                                   model)
+        # grads = self.get_grads(losses, model)
         if self.do_grad_scaling:
             grads = self.unscale_grads(grads)
         # grads_norm = grads.norm(dim=-1)
@@ -567,10 +577,14 @@ class MTDenseTrainer(DenseTrainer):
         # self.num_steps += 1
         return loss, grads_norm
 
-    def uw_backward(self, losses, model):
+    def uw_backward(self, losses, model, grads=None):
         loss = sum(losses)
+        if grads is None:
+            losses = torch.stack(losses)
+            # T x p
+            grads = self.get_grads(losses,
+                                   model)
         # loss = torch.matmul(self.ws * self.num_tasks, torch.stack(losses))
-        grads = self.get_grads(losses, model)
         grads_norm = None
         if self.args.log_gnorm:
             grads_norm = grads.norm(dim=-1)
@@ -587,9 +601,17 @@ class MTDenseTrainer(DenseTrainer):
                           str, Union[torch.Tensor, Any]]):
         model.train()
         inputs = self._prepare_inputs(inputs)
+        if self.args.weight_method == 'naive':
+            return_grads = False
+        else:
+            return_grads = True
         with self.compute_loss_context_manager():
-            losses, grads = self.compute_loss(model, inputs,
-                                              return_grads=True)
+            outs = self.compute_loss(model, inputs,
+                                     return_grads=return_grads)
+            if return_grads:
+                losses, grads = outs
+            else:
+                losses = outs
         assert len(losses) == self.num_tasks
 
         if self.args.n_gpu > 1:
@@ -609,16 +631,16 @@ class MTDenseTrainer(DenseTrainer):
             grads_norm = None
         elif self.args.weight_method == 'pcg':
             # loss = self.naive_backward(losses, model)
-            loss, grads_norm = self.pcg_backward(losses, model)
+            loss, grads_norm = self.pcg_backward(losses, model, grads)
         elif self.args.weight_method == 'cgd':
-            loss, grads_norm = self.cgd_backward(losses, model)
+            loss, grads_norm = self.cgd_backward(losses, model, grads)
             # loss = self.naive_backward(losses, model)
         elif self.args.weight_method == 'uw':
-            loss, grads_norm = self.uw_backward(losses, model)
+            loss, grads_norm = self.uw_backward(losses, model, grads)
         elif self.args.weight_method == 'taco':
             loss, grads_norm = self.taco_backward(losses, model, grads)
         elif self.args.weight_method == 'gn':
-            loss, grads_norm = self.gn_backward(losses, model)
+            loss, grads_norm = self.gn_backward(losses, model, grads)
         else:
             raise NotImplementedError
         # return loss.detach() / self._dist_loss_scale_factor
