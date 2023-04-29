@@ -1180,6 +1180,9 @@ class MTDenseTrainer(DenseTrainer):
             self.control = self.callback_handler.on_save(self.args, self.state,
                                                          self.control)
 
+    def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
+        logger.info(f"Loading model from {resume_from_checkpoint}.")
+
 
 class MultiTaskTBCallback(TensorBoardCallback):
 

@@ -73,13 +73,26 @@ def main():
         cache_dir=model_args.cache_dir,
         use_fast=False,
     )
-    model = DenseModel.build(
-        model_args,
-        data_args,
-        training_args,
-        config=config,
-        cache_dir=model_args.cache_dir,
-    )
+    if training_args.resume_from_checkpoint is not None and \
+            training_args.resume_from_checkpoint != False and \
+            training_args.resume_from_checkpoint != "False":
+        model = DenseModel.build(
+            model_args,
+            data_args,
+            training_args,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            resume_path=training_args.resume_from_checkpoint
+        )
+    else:
+        model = DenseModel.build(
+            model_args,
+            data_args,
+            training_args,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            resume_path=None
+        )
     train_dataset = MappingDRTrainDataset(
         tokenizer, data_args, shuffle_seed=training_args.seed,
         cache_dir=data_args.data_cache_dir or model_args.cache_dir,

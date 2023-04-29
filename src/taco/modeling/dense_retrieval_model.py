@@ -17,10 +17,12 @@ from typing import Union
 from transformers import AutoModel, BatchEncoding, PreTrainedModel, \
     T5EncoderModel
 from transformers.modeling_outputs import ModelOutput
+
 try:
     from transformers.adapters import AutoAdapterModel, AdapterSetup
 except ImportError:
-    print('if use adapter please install transformer-adapter otherwise ignore this')
+    print(
+        'if use adapter please install transformer-adapter otherwise ignore this')
 from typing import Optional, Dict, Union
 
 from ..arguments import ModelArguments, DataArguments, \
@@ -256,9 +258,10 @@ class DenseModel(nn.Module):
     @classmethod
     def build(
             cls,
-            model_args: ModelArguments,
-            data_args: DataArguments,
-            train_args: Union[TrainingArguments, EncodingArguments],
+            model_args: ModelArguments = None,
+            data_args: DataArguments = None,
+            train_args: Union[TrainingArguments, EncodingArguments] = None,
+            resume_path: str = None,
             **hf_kwargs,
     ):
         # load local
@@ -271,7 +274,11 @@ class DenseModel(nn.Module):
                 AutoModel
         if model_args.split_query_encoder or model_args.use_query_adapter:
             task_names = train_args.task_names.split(',')
-        if os.path.isdir(model_args.model_name_or_path):
+        if resume_path is not None:
+            model_name_or_path = resume_path
+        else:
+            model_name_or_path = model_args.model_name_or_path
+        if os.path.isdir(model_name_or_path):
             if model_args.untie_encoder:
                 if model_args.split_query_encoder:
                     lm_q = {}
@@ -279,10 +286,10 @@ class DenseModel(nn.Module):
                         head_q = {}
                     for task_name in task_names:
                         _qry_model_path = os.path.join(
-                            model_args.model_name_or_path,
+                            model_name_or_path,
                             f'query_model_{task_name}')
                         if not os.path.exists(_qry_model_path):
-                            _qry_model_path = model_args.model_name_or_path
+                            _qry_model_path = model_name_or_path
                         logger.info(
                             f'loading query model weight from {_qry_model_path}')
                         lm_q_task = model_class.from_pretrained(
@@ -291,17 +298,17 @@ class DenseModel(nn.Module):
                         )
                         lm_q[task_name] = lm_q_task
                         _qry_head_path = os.path.join(
-                            model_args.model_name_or_path,
+                            model_name_or_path,
                             f'query_head_{task_name}')
                         if model_args.add_linear_head:
                             head_q_task = LinearHead.load(_qry_head_path)
                             head_q[task_name] = head_q_task
                 else:
                     _qry_model_path = os.path.join(
-                        model_args.model_name_or_path,
+                        model_name_or_path,
                         'query_model')
                     if not os.path.exists(_qry_model_path):
-                        _qry_model_path = model_args.model_name_or_path
+                        _qry_model_path = model_name_or_path
                     logger.info(
                         f'loading query model weight from {_qry_model_path}')
 
@@ -312,19 +319,19 @@ class DenseModel(nn.Module):
                     if model_args.use_query_adapter:
                         for task_name in task_names:
                             adapter_path = os.path.join(
-                                model_args.model_name_or_path, f'query_adapter_'
-                                                               f'{task_name}')
+                                model_name_or_path, f'query_adapter_'
+                                                    f'{task_name}')
                             lm_q.load_adapter(adapter_path)
-                    _qry_head_path = os.path.join(model_args.model_name_or_path,
+                    _qry_head_path = os.path.join(model_name_or_path,
                                                   'query_head')
                     if model_args.add_linear_head:
                         head_q = LinearHead.load(_qry_head_path)
-                _psg_model_path = os.path.join(model_args.model_name_or_path,
+                _psg_model_path = os.path.join(model_name_or_path,
                                                'passage_model')
                 if not os.path.exists(_psg_model_path):
-                    _psg_model_path = model_args.model_name_or_path
+                    _psg_model_path = model_name_or_path
 
-                _psg_head_path = os.path.join(model_args.model_name_or_path,
+                _psg_head_path = os.path.join(model_name_or_path,
                                               'passage_head')
 
                 logger.info(
@@ -337,11 +344,11 @@ class DenseModel(nn.Module):
                     head_p = LinearHead.load(_psg_head_path)
             else:
                 lm_q = model_class.from_pretrained(
-                    model_args.model_name_or_path,
+                    model_name_or_path,
                     **hf_kwargs)
                 lm_p = lm_q
                 if model_args.add_linear_head:
-                    head_q = LinearHead.load(model_args.model_name_or_path)
+                    head_q = LinearHead.load(model_name_or_path)
                     head_p = head_q
         # load pre-trained
         else:

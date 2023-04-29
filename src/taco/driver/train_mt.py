@@ -75,13 +75,26 @@ def main():
         num_labels=num_labels,
         cache_dir=model_args.cache_dir,
     )
-    model = DenseModel.build(
-        model_args,
-        data_args,
-        training_args,
-        config=config,
-        cache_dir=model_args.cache_dir,
-    )
+    if training_args.resume_from_checkpoint is not None and \
+            training_args.resume_from_checkpoint != False and \
+            training_args.resume_from_checkpoint != "False":
+        model = DenseModel.build(
+            model_args,
+            data_args,
+            training_args,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            resume_path=training_args.resume_from_checkpoint
+        )
+    else:
+        model = DenseModel.build(
+            model_args,
+            data_args,
+            training_args,
+            config=config,
+            cache_dir=model_args.cache_dir,
+            resume_path=None
+        )
     # multi-task dataset
     train_files = data_args.mt_train_paths.split(',')
     val_files = data_args.mt_eval_paths.split(',')
