@@ -119,11 +119,8 @@ class MTDenseTrainer(DenseTrainer):
             self.ipt_exp = torch.zeros((self.num_tasks, self.grad_dim)).to(
                 self.args.device)
             self.eps = 1e-12
-            logger.info(f'state max steps {self.state.max_steps}')
-            logger.info(f'warmup ratio {self.args.warmup_ratio}')
-            self.taco_warmup_steps = int(self.state.max_steps *
-                                         self.args.warmup_ratio)
-            logger.info(f'taco warmup steps {self.taco_warmup_steps}')
+            # self.taco_warmup_steps = int(self.state.max_steps *
+            #                              self.args.warmup_ratio)
         if not self.args.select_all:
             self.selection_masks = self.get_selection_masks()
         if self.args.weight_method != 'naive':
@@ -373,13 +370,15 @@ class MTDenseTrainer(DenseTrainer):
         if not torch.isfinite(grads).all():
             # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
             logger.info("Detect nan or inf grad! Use naive update ")
-            grads = grads.sum(0)
+            new_grads = grads.sum(0)
             if self.do_grad_scaling:
-                grads = self.scale_grads(grads)
-            self.reset_grads(grads / self.num_tasks)
+                new_grads = self.scale_grads(new_grads)
+            self.reset_grads(new_grads / self.num_tasks)
             loss = sum(losses) / self.num_tasks
         else:
-            logger.info(f'warmup steps {self.taco_warmup_steps}')
+            taco_warmup_steps = int(self.state.max_steps *
+                                    self.args.warmup_ratio)
+            logger.info(f'warmup steps {taco_warmup_steps}')
             with torch.no_grad():
                 # T x p
                 p_datas = self.param2vec()
@@ -389,8 +388,8 @@ class MTDenseTrainer(DenseTrainer):
                 self.ipt_exp.mul_(
                     self.args.beta_taco).add_(ipt,
                                               alpha=1.0 - self.args.beta_taco)
-                if self.state.global_step < self.taco_warmup_steps:
-                    grads = grads.sum(0)
+                if self.state.global_step < taco_warmup_steps:
+                    new_grads = grads.sum(0)
                 else:
                     if self.args.norm_ipt:
                         w_scores = self.ipt_exp / self.args.tau_taco
@@ -401,10 +400,10 @@ class MTDenseTrainer(DenseTrainer):
                     if self.args.discourage:
                         w_scores *= -1
                     gw = F.softmax(w_scores, dim=0)
-                    grads = (gw * grads).sum(0)
+                    new_grads = (gw * grads).sum(0)
             if self.do_grad_scaling:
-                grads = self.scale_grads(grads)
-            self.reset_grads(grads)
+                new_grads = self.scale_grads(new_grads)
+            self.reset_grads(new_grads)
             loss = sum(losses)
         return loss, grads_norm
 
@@ -821,8 +820,6 @@ class MTDenseTrainer(DenseTrainer):
         # This should be the same if the state has been saved but in case the training arguments changed, it's safer
         # to set this after the load.
         self.state.max_steps = max_steps
-        logger.info(f'max steps {max_steps}')
-        logger.info(f'state max steps {self.state.max_steps}')
         self.state.num_train_epochs = num_train_epochs
         self.state.is_local_process_zero = self.is_local_process_zero()
         self.state.is_world_process_zero = self.is_world_process_zero()
