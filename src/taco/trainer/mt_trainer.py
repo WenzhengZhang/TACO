@@ -821,6 +821,8 @@ class MTDenseTrainer(DenseTrainer):
         # This should be the same if the state has been saved but in case the training arguments changed, it's safer
         # to set this after the load.
         self.state.max_steps = max_steps
+        logger.info(f'max steps {max_steps}')
+        logger.info(f'state max steps {self.state.max_steps}')
         self.state.num_train_epochs = num_train_epochs
         self.state.is_local_process_zero = self.is_local_process_zero()
         self.state.is_world_process_zero = self.is_world_process_zero()
