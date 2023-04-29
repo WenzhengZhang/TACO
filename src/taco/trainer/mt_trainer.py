@@ -368,7 +368,10 @@ class MTDenseTrainer(DenseTrainer):
         grads_norm = None
         if self.args.log_gnorm:
             grads_norm = grads.norm(dim=-1)
-        if not torch.isfinite(grads).all():
+        grads_norm = grads.norm(dim=-1, keepdim=True)
+        total_norm = grads_norm.sum()
+        if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
+        # if not torch.isfinite(grads).all():
             # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
             logger.info("Detect nan or inf grad! Use naive update ")
             new_grads = grads.sum(0)
@@ -389,7 +392,7 @@ class MTDenseTrainer(DenseTrainer):
                 self.ipt_exp.mul_(
                     self.args.beta_taco).add_(ipt,
                                               alpha=1.0 - self.args.beta_taco)
-                if self.state.global_step < taco_warmup_steps:
+                if self.state.global_step < 10:
                     new_grads = grads.sum(0)
                 else:
                     if self.args.norm_ipt:
