@@ -119,8 +119,11 @@ class MTDenseTrainer(DenseTrainer):
             self.ipt_exp = torch.zeros((self.num_tasks, self.grad_dim)).to(
                 self.args.device)
             self.eps = 1e-12
+            logger.info(f'state max steps {self.state.max_steps}')
+            logger.info(f'warmup ratio {self.args.warmup_ratio}')
             self.taco_warmup_steps = int(self.state.max_steps *
                                          self.args.warmup_ratio)
+            logger.info(f'taco warmup steps {self.taco_warmup_steps}')
         if not self.args.select_all:
             self.selection_masks = self.get_selection_masks()
         if self.args.weight_method != 'naive':
@@ -370,10 +373,10 @@ class MTDenseTrainer(DenseTrainer):
         if not torch.isfinite(grads).all():
             # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
             logger.info("Detect nan or inf grad! Use naive update ")
-            new_grads = grads.sum(0)
+            grads = grads.sum(0)
             if self.do_grad_scaling:
-                new_grads = self.scale_grads(new_grads)
-            self.reset_grads(new_grads / self.num_tasks)
+                grads = self.scale_grads(grads)
+            self.reset_grads(grads / self.num_tasks)
             loss = sum(losses) / self.num_tasks
         else:
             logger.info(f'warmup steps {self.taco_warmup_steps}')
@@ -387,7 +390,7 @@ class MTDenseTrainer(DenseTrainer):
                     self.args.beta_taco).add_(ipt,
                                               alpha=1.0 - self.args.beta_taco)
                 if self.state.global_step < self.taco_warmup_steps:
-                    new_grads = grads.sum(0)
+                    grads = grads.sum(0)
                 else:
                     if self.args.norm_ipt:
                         w_scores = self.ipt_exp / self.args.tau_taco
@@ -398,10 +401,10 @@ class MTDenseTrainer(DenseTrainer):
                     if self.args.discourage:
                         w_scores *= -1
                     gw = F.softmax(w_scores, dim=0)
-                    new_grads = (gw * grads).sum(0)
+                    grads = (gw * grads).sum(0)
             if self.do_grad_scaling:
-                new_grads = self.scale_grads(new_grads)
-            self.reset_grads(new_grads)
+                grads = self.scale_grads(grads)
+            self.reset_grads(grads)
             loss = sum(losses)
         return loss, grads_norm
 
