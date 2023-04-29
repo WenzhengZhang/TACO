@@ -233,11 +233,13 @@ class MTDenseTrainer(DenseTrainer):
             if param.grad is not None:
                 beg = 0 if i == 0 else self.grad_idx_cumsum[i - 1]
                 end = self.grad_idx_cumsum[i]
-
+                new_grads = torch.zeros(end - beg).to(self.args.device)
+                for j in range(beg, end):
+                    new_grads[j] = (grads[:, j] * w_scores[:, j].softmax(
+                        0)).sum(0)
                 param.grad.data = (
-                        grads[:, beg:end] * w_scores[:, beg:end].softmax(
-                    dim=0)).sum(0).contiguous().view(
-                    param.data.size()).data.clone()
+                    new_grads.contiguous().view(
+                        param.data.size()).data.clone())
 
     def get_task_collators(self):
         collators = [QPCollator(
