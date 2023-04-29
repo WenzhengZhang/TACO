@@ -168,6 +168,46 @@ class DenseTrainer(Trainer):
         return super(DenseTrainer, self).training_step(
             *args) / self._dist_loss_scale_factor
 
+    def prediction_step(
+            self,
+            model: nn.Module,
+            inputs: Dict[str, Union[torch.Tensor, Any]],
+            prediction_loss_only: bool,
+            ignore_keys: Optional[List[str]] = None,
+    ) -> Tuple[
+        Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
+        """
+        Perform an evaluation step on `model` using `inputs`.
+
+        Subclass and override to inject custom behavior.
+
+        Args:
+            model (`nn.Module`):
+                The model to evaluate.
+            inputs (`Dict[str, Union[torch.Tensor, Any]]`):
+                The inputs and targets of the model.
+
+                The dictionary will be unpacked before being fed to the model. Most models expect the targets under the
+                argument `labels`. Check your model's documentation for all accepted arguments.
+            prediction_loss_only (`bool`):
+                Whether or not to return the loss only.
+            ignore_keys (`List[str]`, *optional*):
+                A list of keys in the output of your model (if it is a dictionary) that should be ignored when
+                gathering predictions.
+
+        Return:
+            Tuple[Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]: A tuple with the loss,
+            logits and labels (each being optional).
+        """
+
+        inputs = self._prepare_inputs(inputs)
+
+        with torch.no_grad():
+            with self.compute_loss_context_manager():
+                loss, outputs = self.compute_loss(model, inputs,
+                                                  return_outputs=True)
+        return loss, None, None
+
     # support hard negative mining resuming from previous optimizer states,
     # it's more natural than tuning a lr decay rate
     # needs to provide resume_from_checkpoint
@@ -370,7 +410,7 @@ class DenseTrainer(Trainer):
                     # AT THE VERY END!
                     _ = list(train_dataloader.sampler)
         if self.args.hard_negative_mining:
-            assert (num_train_epochs % self.args.epochs_per_hn) == 0,\
+            assert (num_train_epochs % self.args.epochs_per_hn) == 0, \
                 "total num epochs should be divided by epochs per hard neg"
             target_epochs = (epochs_trained // self.args.epochs_per_hn
                              + 1) * self.args.epochs_per_hn
@@ -447,7 +487,7 @@ class DenseTrainer(Trainer):
                 ):
                     # if loss is nan or inf simply add the average of previous logged losses
                     tr_loss += tr_loss / (
-                                1 + self.state.global_step - self._globalstep_last_logged)
+                            1 + self.state.global_step - self._globalstep_last_logged)
                 else:
                     tr_loss += tr_loss_step
 
@@ -589,7 +629,8 @@ class DenseTrainer(Trainer):
         self.log(metrics)
 
         run_dir = self._get_output_dir(trial)
-        checkpoints_sorted = self._sorted_checkpoints(use_mtime=False, output_dir=run_dir)
+        checkpoints_sorted = self._sorted_checkpoints(use_mtime=False,
+                                                      output_dir=run_dir)
 
         # Delete the last checkpoint when save_total_limit=1 if it's different from the best checkpoint and process allowed to save.
         if self.args.should_save and self.state.best_model_checkpoint is not \
@@ -597,10 +638,12 @@ class DenseTrainer(Trainer):
                 self.is_world_process_zero():
             for checkpoint in checkpoints_sorted:
                 if checkpoint != self.state.best_model_checkpoint:
-                    logger.info(f"Deleting older checkpoint [{checkpoint}] due to args.save_total_limit")
+                    logger.info(
+                        f"Deleting older checkpoint [{checkpoint}] due to args.save_total_limit")
                     shutil.rmtree(checkpoint)
 
-        self.control = self.callback_handler.on_train_end(args, self.state, self.control)
+        self.control = self.callback_handler.on_train_end(args, self.state,
+                                                          self.control)
 
         return TrainOutput(self.state.global_step, train_loss, metrics)
 

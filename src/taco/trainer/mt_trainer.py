@@ -384,7 +384,8 @@ class MTDenseTrainer(DenseTrainer):
                 if self.args.norm_ipt:
                     ipt = ipt / (ipt.median(dim=-1, keepdim=True)[0] + self.eps)
                 self.ipt_exp.mul_(
-                    self.args.beta_taco).add_(ipt, alpha=1.0 - self.args.beta_taco)
+                    self.args.beta_taco).add_(ipt,
+                                              alpha=1.0 - self.args.beta_taco)
                 if self.state.global_step < self.taco_warmup_steps:
                     new_grads = grads.sum(0)
                 else:
@@ -610,80 +611,17 @@ class MTDenseTrainer(DenseTrainer):
     ) -> Tuple[
         Optional[torch.Tensor], Optional[torch.Tensor], Optional[torch.Tensor]]:
 
-        has_labels = all(inputs.get(k) is not None for k in self.label_names)
+        # has_labels = all(inputs.get(k) is not None for k in self.label_names)
         inputs = self._prepare_inputs(inputs)
-        if ignore_keys is None:
-            if hasattr(self.model, "config"):
-                ignore_keys = getattr(self.model.config,
-                                      "keys_to_ignore_at_inference", [])
-            else:
-                ignore_keys = []
-
-        # labels may be popped when computing the loss (label smoothing for instance) so we grab them first.
-        if has_labels:
-            labels = nested_detach(
-                tuple(inputs.get(name) for name in self.label_names))
-            if len(labels) == 1:
-                labels = labels[0]
-        else:
-            labels = None
+        # prediction_loss_only = True
 
         with torch.no_grad():
-            if is_sagemaker_mp_enabled():
-                raw_outputs = smp_forward_only(model, inputs)
-                if has_labels:
-                    if isinstance(raw_outputs, dict):
-                        loss_mb = raw_outputs["loss"]
-                        logits_mb = tuple(v for k, v in raw_outputs.items() if
-                                          k not in ignore_keys + ["loss"])
-                    else:
-                        loss_mb = raw_outputs[0]
-                        logits_mb = raw_outputs[1:]
-
-                    loss = loss_mb.reduce_mean().detach().cpu()
-                    logits = smp_nested_concat(logits_mb)
-                else:
-                    loss = None
-                    if isinstance(raw_outputs, dict):
-                        logits_mb = tuple(v for k, v in raw_outputs.items() if
-                                          k not in ignore_keys)
-                    else:
-                        logits_mb = raw_outputs
-                    logits = smp_nested_concat(logits_mb)
-            else:
-                if has_labels:
-                    with self.compute_loss_context_manager():
-                        losses, outputs = self.compute_loss(model, inputs,
-                                                            return_outputs=True)
-                    loss = sum(losses)
-                    loss = loss.mean().detach()
-
-                    if isinstance(outputs, dict):
-                        logits = tuple(v for k, v in outputs.items() if
-                                       k not in ignore_keys + ["loss"])
-                    else:
-                        logits = outputs[1:]
-                else:
-                    loss = None
-                    with self.compute_loss_context_manager():
-                        outputs = model(**inputs)
-                    if isinstance(outputs, dict):
-                        logits = tuple(v for k, v in outputs.items() if
-                                       k not in ignore_keys)
-                    else:
-                        logits = outputs
-                    # TODO: this needs to be fixed and made cleaner later.
-                    if self.args.past_index >= 0:
-                        self._past = outputs[self.args.past_index - 1]
-
-        if prediction_loss_only:
-            return (loss, None, None)
-
-        logits = nested_detach(logits)
-        if len(logits) == 1:
-            logits = logits[0]
-
-        return (loss, logits, labels)
+            with self.compute_loss_context_manager():
+                losses, outputs = self.compute_loss(model, inputs,
+                                                    return_outputs=True)
+            loss = sum(losses)
+            loss = loss.mean().detach()
+        return loss, None, None
 
     def log(self, logs: Dict[str, Any]) -> None:
         if self.state.epoch is not None:
