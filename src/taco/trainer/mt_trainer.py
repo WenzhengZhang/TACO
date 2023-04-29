@@ -368,10 +368,10 @@ class MTDenseTrainer(DenseTrainer):
         grads_norm = None
         if self.args.log_gnorm:
             grads_norm = grads.norm(dim=-1)
-        grads_norm = grads.norm(dim=-1, keepdim=True)
-        total_norm = grads_norm.sum()
-        if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
-        # if not torch.isfinite(grads).all():
+        # grads_norm = grads.norm(dim=-1, keepdim=True)
+        # total_norm = grads_norm.sum()
+        # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
+        if not torch.isfinite(grads).all():
             # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
             logger.info("Detect nan or inf grad! Use naive update ")
             new_grads = grads.sum(0)
@@ -403,8 +403,8 @@ class MTDenseTrainer(DenseTrainer):
                         w_scores /= self.args.tau_taco
                     if self.args.discourage:
                         w_scores *= -1
-                    gw = F.softmax(w_scores, dim=0)
-                    new_grads = (gw * grads).sum(0)
+                    # gw = F.softmax(w_scores, dim=0)
+                    new_grads = (w_scores.softmax(dim=0) * grads).sum(0)
             if self.do_grad_scaling:
                 new_grads = self.scale_grads(new_grads)
             self.reset_grads(new_grads)
