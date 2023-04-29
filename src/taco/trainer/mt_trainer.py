@@ -361,27 +361,26 @@ class MTDenseTrainer(DenseTrainer):
         # T x p
         grads = self.get_grads(losses,
                                model)
-        if self.do_grad_scaling:
-            grads = self.unscale_grads(grads)
-        # grads_norm = grads.norm(dim=-1)
-        # total_norm = grads_norm.sum()
-        grads_norm = None
-        if self.args.log_gnorm:
-            grads_norm = grads.norm(dim=-1)
-        if not torch.isfinite(grads).all():
-            # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
-            logger.info("Detect nan or inf grad! Use naive update ")
-            new_grads = grads.sum(0)
+        with torch.no_grad():
             if self.do_grad_scaling:
-                new_grads = self.scale_grads(new_grads)
-            self.reset_grads(new_grads / self.num_tasks)
-            loss = sum(losses) / self.num_tasks
-        else:
-            taco_warmup_steps = int(self.state.max_steps *
-                                    self.args.warmup_ratio)
-            # logger.info(f'warmup steps {taco_warmup_steps}')
-            with torch.no_grad():
-                # T x p
+                grads = self.unscale_grads(grads)
+            grads_norm = None
+            if self.args.log_gnorm:
+                grads_norm = grads.norm(dim=-1)
+            if not torch.isfinite(grads).all():
+                # if torch.logical_or(total_norm.isnan(), total_norm.isinf()):
+                logger.info("Detect nan or inf grad! Use naive update ")
+                new_grads = grads.sum(0)
+                if self.do_grad_scaling:
+                    new_grads = self.scale_grads(new_grads)
+                self.reset_grads(new_grads / self.num_tasks)
+                loss = sum(losses) / self.num_tasks
+            else:
+                taco_warmup_steps = int(self.state.max_steps *
+                                        self.args.warmup_ratio)
+                # logger.info(f'warmup steps {taco_warmup_steps}')
+                # with torch.no_grad():
+                #     # T x p
                 ipt = self.param2vec()
                 ipt = (grads * ipt).abs()
                 if self.args.norm_ipt:
@@ -402,10 +401,10 @@ class MTDenseTrainer(DenseTrainer):
                         w_scores *= -1
                     # gw = F.softmax(w_scores, dim=0)
                     new_grads = (w_scores.softmax(dim=0) * grads).sum(0)
-            if self.do_grad_scaling:
-                new_grads = self.scale_grads(new_grads)
-            self.reset_grads(new_grads)
-            loss = sum(losses)
+                if self.do_grad_scaling:
+                    new_grads = self.scale_grads(new_grads)
+                self.reset_grads(new_grads)
+                loss = sum(losses)
         return loss, grads_norm
 
     def pcg_backward(self, losses, model):
