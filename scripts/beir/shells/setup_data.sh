@@ -33,26 +33,26 @@ do
   if [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
     echo "process both train,dev and test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-      --processed_dir $RAW_DIR/${dataset} \
+      --processed_dir $RAW_DIR \
       --process_train \
       --process_dev \
       --dataset_name ${dataset}
   elif [[ " ${has_train_sets[*]} " =~ " ${dataset} " ]]; then
     echo "process train and test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-      --processed_dir $RAW_DIR/${dataset} \
+      --processed_dir $RAW_DIR \
       --process_train \
       --dataset_name ${dataset}
   elif [[ " ${has_dev_sets[*]} " =~ " ${dataset} " ]]; then
     echo "process dev and test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-      --processed_dir $RAW_DIR/${dataset} \
+      --processed_dir $RAW_DIR \
       --process_dev \
       --dataset_name ${dataset}
   else
     echo "process test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-      --processed_dir $RAW_DIR/${dataset} \
+      --processed_dir $RAW_DIR \
       --dataset_name ${dataset}
   fi
   echo "remove original beir data"
