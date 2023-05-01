@@ -20,10 +20,7 @@ def process_qrel(input_dir, processed_dir, data_name, split):
             score = qrel_df.loc[i, 'score']
             q_id = qrel_df.loc[i, 'query-id']
             d_id = qrel_df.loc[i, 'corpus-id']
-            try:
-                assert (qrel_df.loc[i, 'score'] == 1)
-            except AssertionError:
-                print(qrel_df.loc[i])
+            # assert (qrel_df.loc[i, 'score'] == 1)
             tsv_w.writerow([q_id, 0, d_id, score])
             q_ids.append(str(q_id))
     # Test Qrels TREC
