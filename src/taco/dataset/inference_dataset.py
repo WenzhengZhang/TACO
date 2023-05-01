@@ -7,7 +7,7 @@ from PIL import Image
 import datasets
 
 from ..arguments import DataArguments
-from ..utils import find_all_markers, fill_template
+from ..utils import find_all_markers, fill_template, get_idx
 
 """
 support features:
@@ -16,19 +16,6 @@ done: 1. stream and map dataset
 done: 2. add task prefix
 3. beir dataset
 """
-
-
-def get_idx(obj):
-    example_id = obj.get("_id", None)
-    if example_id is None:
-        example_id = obj.get("id", None)
-    if example_id is None:
-        example_id = obj.get("text_id", None)
-    if example_id is None:
-        raise ValueError(
-            "No id field found in data, tried `_id`, `id`, `text_id`")
-    example_id = str(example_id) if example_id is not None else None
-    return example_id
 
 
 class InferenceMapDataset(Dataset):
@@ -370,10 +357,10 @@ class MappingTsvDataset(MappingInferenceDataset, InferenceDataset):
         if self.all_columns is None:
             sample = self.dataset[0]
             self.all_columns = sample.keys()
-        if 'id' not in self.all_columns:
-            ids = list(range(len(self.dataset)))
-            self.dataset = self.dataset.add_column('id', ids)
-            self.all_columns = ['id'] + self.all_columns
+        # if 'id' not in self.all_columns:
+        #     ids = list(range(len(self.dataset)))
+        #     self.dataset = self.dataset.add_column('id', ids)
+        #     self.all_columns = ['id'] + self.all_columns
 
         # self.dataset = {}
         # for item in hf_dataset:

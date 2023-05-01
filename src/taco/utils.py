@@ -32,6 +32,19 @@ def sample_range_excluding(n, k, excluding):
     return [i + bisect.bisect_right(skips, i) for i in s]
 
 
+def get_idx(obj):
+    example_id = obj.get("_id", None)
+    if example_id is None:
+        example_id = obj.get("id", None)
+    if example_id is None:
+        example_id = obj.get("text_id", None)
+    if example_id is None:
+        raise ValueError(
+            "No id field found in data, tried `_id`, `id`, `text_id`")
+    example_id = str(example_id) if example_id is not None else None
+    return example_id
+
+
 def find_all_markers(template: str):
     """
     Find all markers' names (quoted in "<>") in a template.
@@ -92,6 +105,7 @@ class SimpleTrainPreProcessor:
     template: str = None
     add_rand_negs: bool = False
     num_rands: int = 32
+    use_doc_id_map: bool = False
 
     def __post_init__(self):
         self.queries = self.read_queries(self.query_file)
@@ -101,6 +115,8 @@ class SimpleTrainPreProcessor:
             column_names=self.columns,
             delimiter='\t',
         )['train']
+        if self.use_doc_id_map:
+            self.doc_id_map = self.get_doc_id_map()
 
     @staticmethod
     def read_queries(queries):
@@ -124,6 +140,10 @@ class SimpleTrainPreProcessor:
                     qrel[topicid] = [docid]
         return qrel
 
+    def get_doc_id_map(self):
+        return {get_idx(self.collection[index]): index for index in range(len(
+            self.collection))}
+
     def get_query(self, q):
         query_encoded = self.tokenizer.encode(
             self.queries[q],
@@ -133,8 +153,9 @@ class SimpleTrainPreProcessor:
         )
         return query_encoded
 
-    def get_passage(self, p):
-        entry = self.collection[int(p)]
+    def get_passage(self, p, use_doc_id_map=False):
+        pid = self.doc_id_map[p] if use_doc_id_map else int(p)
+        entry = self.collection[pid]
         title = entry[self.title_field]
         title = "" if title is None else title
         body = entry[self.text_field]
@@ -160,14 +181,20 @@ class SimpleTrainPreProcessor:
         q, pp, nn = train
         train_example = {
             'query': self.get_query(q),
-            'positives': [self.get_passage(p) for p in pp],
-            'negatives': [self.get_passage(n) for n in nn],
+            'positives': [self.get_passage(p, self.use_doc_id_map) for p in pp],
+            'negatives': [self.get_passage(n, self.use_doc_id_map) for n in nn],
         }
         if self.add_rand_negs:
+            if self.use_doc_id_map:
+                pp = set([self.doc_id_map[p] for p in pp])
+                nn = set([self.doc_id_map[n] for n in nn])
+            else:
+                pp = set([int(p) for p in pp])
+                nn = set([int(n) for n in nn])
             rand_negs = sample_range_excluding(
-                len(self.collection), self.num_rands, set(pp).union(set(nn)))
-            train_example['random_negatives'] = [self.get_passage(n) for n in
-                                                 rand_negs]
+                len(self.collection), self.num_rands, pp.union(nn))
+            train_example['random_negatives'] = [self.get_passage(n, False)
+                                                 for n in rand_negs]
 
         return json.dumps(train_example)
 
