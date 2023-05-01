@@ -55,6 +55,6 @@ do
       --processed_dir $RAW_DIR \
       --dataset_name ${dataset}
   fi
-  echo "remove original beir data"
-  rm -rf $ORIG_DIR/${dataset}
+#  echo "remove original beir data"
+#  rm -rf $ORIG_DIR/${dataset}
 done
