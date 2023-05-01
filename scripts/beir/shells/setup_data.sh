@@ -26,7 +26,7 @@ for dataset in ${beir_sets[@]}
 do
   echo "downloading ${dataset}"
   mkdir -p $RAW_DIR/$dataset
-  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
+#  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
   python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
     --out_dir $ORIG_DIR
   echo "process original ${dataset} to TACO format"
@@ -35,21 +35,25 @@ do
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
       --processed_dir $RAW_DIR/${dataset} \
       --process_train \
-      --process_dev
+      --process_dev \
+      --dataset_name ${dataset}
   elif [[ " ${has_train_sets[*]} " =~ " ${dataset} " ]]; then
     echo "process train and test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
       --processed_dir $RAW_DIR/${dataset} \
-      --process_train
+      --process_train \
+      --dataset_name ${dataset}
   elif [[ " ${has_dev_sets[*]} " =~ " ${dataset} " ]]; then
     echo "process dev and test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
       --processed_dir $RAW_DIR/${dataset} \
-      --process_dev
+      --process_dev \
+      --dataset_name ${dataset}
   else
     echo "process test"
     python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-      --processed_dir $RAW_DIR/${dataset}
+      --processed_dir $RAW_DIR/${dataset} \
+      --dataset_name ${dataset}
   fi
   echo "remove original beir data"
   rm -rf $ORIG_DIR/${dataset}
