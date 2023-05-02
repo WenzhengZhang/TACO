@@ -27,7 +27,7 @@ mkdir -p $EVAL_DIR
 #mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-beir_sets=(trec-covid nfcorpus fiqa arguana webis-touche2020 quora scidocs scifact nq hotpotqa dbpedia-entity fever climate-fever cqadupstack)
+beir_sets=(trec-covid nfcorpus fiqa arguana webis-touche2020 quora scidocs scifact nq hotpotqa dbpedia-entity fever climate-fever)
 
 SAVE_STEP=10000
 EVAL_STEP=300
