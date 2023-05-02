@@ -51,14 +51,14 @@ cp rocketQA-marco/train.query.txt $ORIG_DIR
 ### work in this folder for now
 cd $ORIG_DIR
 
-if [ ! -f "$COLLECTION_DIR/$ORIG_DIR/collection.tsv" ]; then
+if [ ! -f "$ORIG_DIR/collection.tsv" ]; then
     wget https://msmarco.blob.core.windows.net/msmarcoranking/collectionandqueries.tar.gz
     tar -zxvf collectionandqueries.tar.gz
     rm collectionandqueries.tar.gz
 
 fi 
 
-if [ ! -f "$COLLECTION_DIR/$ORIG_DIR/triples.train.small.tsv" ]; then
+if [ ! -f "$ORIG_DIR/triples.train.small.tsv" ]; then
     wget https://msmarco.blob.core.windows.net/msmarcoranking/triples.train.small.tar.gz
     tar -zxvf triples.train.small.tar.gz
     rm triples.train.small.tar.gz*
@@ -66,13 +66,13 @@ if [ ! -f "$COLLECTION_DIR/$ORIG_DIR/triples.train.small.tsv" ]; then
 fi 
 
 
-if [ ! -f "$COLLECTION_DIR/$ORIG_DIR/qrels.train.tsv" ]; then
+if [ ! -f "$ORIG_DIR/qrels.train.tsv" ]; then
     wget https://msmarco.blob.core.windows.net/msmarcoranking/qrels.train.tsv -O qrels.train.tsv
 
 fi 
 
 
-if [ ! -f "$COLLECTION_DIR/$ORIG_DIR/qidpidtriples.train.full.2.tsv" ]; then
+if [ ! -f "$ORIG_DIR/qidpidtriples.train.full.2.tsv" ]; then
     wget https://msmarco.blob.core.windows.net/msmarcoranking/qidpidtriples.train.full.2.tsv.gz
     gunzip qidpidtriples.train.full.2.tsv.gz
 
@@ -80,16 +80,16 @@ fi
 
 
 ### if you want to join titles with the msmarco passages
-if [ -f "$COLLECTION_DIR/$ORIG_DIR/collection_with_title.tsv" ]; then
-    echo "$COLLECTION_DIR/$ORIG_DIR/collection_with_title.tsv exists.";
+if [ -f "$ORIG_DIR/collection_with_title.tsv" ]; then
+    echo "$ORIG_DIR/collection_with_title.tsv exists.";
 else 
     echo "Joining para.txt and para.title.txt";
     join  -t "$(echo -en '\t')"  -e '' -a 1  -o 1.1 2.2 1.2  <(sort -k1,1 para.txt) <(sort -k1,1 para.title.txt) | sort -k1,1 -n > collection_with_title.tsv
 
 fi
 
-if [ -f "$COLLECTION_DIR/$ORIG_DIR/train.negatives.tsv" ]; then
-    echo "$COLLECTION_DIR/$ORIG_DIR/train.negatives.tsv exists.";
+if [ -f "$ORIG_DIR/train.negatives.tsv" ]; then
+    echo "$ORIG_DIR/train.negatives.tsv exists.";
 else 
     echo "processing train.negatives.tsv -- negative documents for every query";
     awk -v RS='\r\n' '$1==last {printf ",%s",$3; next} NR>1 {print "";} {last=$1; printf "%s\t%s",$1,$3;} END{print "";}' qidpidtriples.train.full.2.tsv > train.negatives.tsv
