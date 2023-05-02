@@ -110,7 +110,7 @@ do
       --add_query_task_prefix True \
       --cache_dir $CACHE_DIR
 
-  $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 $RAW_DIR/${beir_set}/qrel.test.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
+  $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 -mrecall.100 $RAW_DIR/${beir_set}/qrel.test.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
  
   echo "deleting warmed up embeddings for ${beir_set}"
   rm $EMBEDDING_DIR/embeddings.corpus.rank.*

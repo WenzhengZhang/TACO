@@ -23,7 +23,7 @@ mkdir -p $EMBEDDING_DIR
 mkdir -p $RESULT_DIR
 mkdir -p $EVAL_DIR
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-kilt_sets=(nq tqa hopo wow trex fever zsre aida)
+kilt_sets=(nq tqa hopo wow)
 
 SAVE_STEP=10000
 EVAL_STEP=300
