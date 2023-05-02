@@ -70,7 +70,8 @@ def process_corpus(input_dir, processed_dir):
                     text = " ".join(text.split())
                 else:
                     text = item['text']
-                tsv_w.writerow([_id, title, text])
+                if _id is not None and _id != "":
+                    tsv_w.writerow([_id, title, text])
                 doc_count += 1
     print(f'doc count {doc_count}')
 

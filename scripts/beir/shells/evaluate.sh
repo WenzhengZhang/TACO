@@ -2,6 +2,7 @@
 MODEL_DIR=$1
 MODEL_TYPE=$2
 HOME_DIR="/common/users/wz283/projects/"
+CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
@@ -58,6 +59,19 @@ do
   else
     p_len=160
   fi
+  if [ ${beir_set} == hotpotqa ]; then
+    task_name=HOPO
+  elif [ ${beir_set} == trec_covid ];then
+    task_name=COVID
+  elif [ ${beir_set} == webis-touche2020 ]; then
+    task_name=TOUCHE
+  elif [ ${beir_set} == dbpedia-entity ]; then
+    task_name=DBPEDIA
+  elif [ ${beir_set} == climate-fever ]; then
+    task_name=CLIMATE
+  else
+    task_name=${beir_set^^}
+  fi
   echo "building index for ${beir_set}"
 #  python src/taco/driver/build_index.py  \
   torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
@@ -71,7 +85,8 @@ do
       --q_max_len $max_q_len  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 0
+      --dataloader_num_workers 0 \
+      --cache_dir $CACHE_DIR
 
   echo "retrieve test data of ${beir_set} ... "
   if [ ! -d "$RESULT_DIR/${beir_set}" ]; then
@@ -90,8 +105,9 @@ do
       --fp16  \
       --trec_save_path $RESULT_DIR/${beir_set}/test.trec \
       --dataloader_num_workers 0 \
-      --task_name ${beir_set^^} \
-      --add_query_task_prefix True
+      --task_name $task_name \
+      --add_query_task_prefix True \
+      --cache_dir $CACHE_DIR
 
   $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 $RAW_DIR/${beir_set}/qrel.test.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
  
