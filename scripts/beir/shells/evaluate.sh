@@ -44,14 +44,15 @@ n_gpu=8
 
 cd $CODE_DIR
 export PYTHONPATH=.
+
 for beir_set in ${beir_sets[@]}
 do
   echo "setup max query and doc length"
-  if [ ${dataset_name} == arguana ]; then
+  if [ ${beir_set} == arguana ]; then
     max_q_len=132
   else
     max_q_len=68
-  if [ ${dataset_name} == scifact ] || [ ${dataset_name} == trec-news ]; then
+  if [ ${beir_set} == scifact ] || [ ${beir_set} == trec-news ]; then
     p_len=260
   else
     p_len=160
