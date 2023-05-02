@@ -52,10 +52,12 @@ do
     max_q_len=132
   else
     max_q_len=68
+  fi
   if [ ${beir_set} == scifact ] || [ ${beir_set} == trec-news ]; then
     p_len=260
   else
     p_len=160
+  fi
   echo "building index for ${beir_set}"
 #  python src/taco/driver/build_index.py  \
   torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
@@ -93,5 +95,6 @@ do
  
   echo "deleting warmed up embeddings for ${beir_set}"
   rm $EMBEDDING_DIR/embeddings.corpus.rank.*
+
 done
 
