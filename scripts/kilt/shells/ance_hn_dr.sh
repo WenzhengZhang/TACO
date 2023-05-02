@@ -46,13 +46,13 @@ n_gpu=8
 for kilt_set in ${kilt_sets[@]}
 do
   if [ ${kilt_set} == wow ]; then
-    max_q_len=256
+    max_q_len=260
   elif [ ${kilt_set} == fever ]; then
-    max_q_len=64
+    max_q_len=68
   elif [ ${kilt_set} == aida ]; then
-    max_q_len=128
+    max_q_len=132
   else
-    max_q_len=32
+    max_q_len=36
   fi
   echo "${kilt_set} ance training"
   for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iters++))
@@ -74,7 +74,9 @@ do
             --fp16  \
             --trec_save_path $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/train.trec \
             --dataloader_num_workers 0 \
-            --topk 110
+            --topk 110 \
+            --task_name ${kilt_set^^} \
+            --add_query_task_prefix True
         echo "building hard negatives of ance first episode for ${kilt_set} ..."
         mkdir -p $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}
         python src/taco/dataset/build_hn.py  \
@@ -139,6 +141,7 @@ do
           --metric_for_best_model loss \
           --hard_negative_mining True \
           --rands_ratio $rands_ratio \
+          -add_query_task_prefix True \
           --resume_from_checkpoint $resume
       fi
 
@@ -174,7 +177,9 @@ do
           --q_max_len $max_q_len  \
           --fp16  \
           --trec_save_path $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev.trec \
-          --dataloader_num_workers 0
+          --dataloader_num_workers 0 \
+          --task_name ${kilt_set^^} \
+          --add_query_task_prefix True
 
       $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 $RAW_DIR/${kilt_set}/dev.qrel.trec $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev.trec > $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev_results.txt
       echo "page-level scoring ..."

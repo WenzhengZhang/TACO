@@ -2,7 +2,7 @@ import glob
 import os
 import pickle
 from contextlib import nullcontext
-from typing import Dict, List
+from typing import Dict, List, Union
 import logging
 
 import faiss
@@ -11,7 +11,8 @@ import torch
 from torch.cuda import amp
 import torch.distributed as dist
 import torch.nn as nn
-from torch.utils.data import DataLoader, IterableDataset, SequentialSampler
+from torch.utils.data import DataLoader, IterableDataset, SequentialSampler, \
+    Dataset
 from tqdm import tqdm
 from transformers.trainer_pt_utils import IterableDatasetShard, \
     SequentialDistributedSampler
@@ -184,12 +185,13 @@ class Retriever:
         self.doc_lookup = []
         self.query_lookup = []
 
-    def query_embedding_inference(self, query_dataset: IterableDataset):
+    def query_embedding_inference(self, query_dataset: Union[Dataset,
+                                                             IterableDataset]):
         if self.args.n_gpu > 1:
             self.model = nn.DataParallel(self.model)
         if isinstance(self.corpus_dataset, torch.utils.data.IterableDataset):
             if self.args.world_size > 1:
-                self.query_dataset = IterableDatasetShard(
+                query_dataset = IterableDatasetShard(
                     query_dataset,
                     batch_size=self.args.per_device_eval_batch_size,
                     drop_last=False,
@@ -205,11 +207,11 @@ class Retriever:
             )
         else:
             if self.args.local_rank != -1:
-                eval_sampler = SequentialSampler(self.query_dataset)
+                eval_sampler = SequentialSampler(query_dataset)
             else:
-                eval_sampler = SequentialDistributedSampler(self.query_dataset)
+                eval_sampler = SequentialDistributedSampler(query_dataset)
             dataloader = DataLoader(
-                self.query_dataset,
+                query_dataset,
                 sampler=eval_sampler,
                 batch_size=self.args.eval_batch_size,
                 collate_fn=EncodeCollator(),

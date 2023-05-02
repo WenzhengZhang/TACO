@@ -158,6 +158,7 @@ class InferenceDataset:
                 self.template) if data_args.all_markers is None else data_args.all_markers.split(
                 ",")
         self.data_args = data_args
+        self.task_name = data_args.task_name
         if is_query:
             if self.data_args.add_query_task_prefix:
                 self.task_prefix = self.get_task_prefix(data_args.task_name)

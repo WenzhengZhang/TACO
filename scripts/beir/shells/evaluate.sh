@@ -89,7 +89,9 @@ do
       --q_max_len $max_q_len  \
       --fp16  \
       --trec_save_path $RESULT_DIR/${beir_set}/test.trec \
-      --dataloader_num_workers 0
+      --dataloader_num_workers 0 \
+      --task_name ${beir_set^^} \
+      --add_query_task_prefix True
 
   $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 $RAW_DIR/${beir_set}/qrel.test.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
  
