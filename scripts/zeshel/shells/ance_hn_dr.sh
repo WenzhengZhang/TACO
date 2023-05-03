@@ -133,7 +133,7 @@ do
         --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
         --qrels $RAW_DIR/train.qrel.tsv \
         --queries $RAW_DIR/train.query.txt \
-        --collection $RAW_DIR/psg_corpus.tsv \
+        --collection $RAW_DIR/psg_corpus_train.tsv \
         --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
         --template "Title: <title> Text: <text>" \
         --num_hards 64 \
