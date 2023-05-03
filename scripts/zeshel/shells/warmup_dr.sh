@@ -105,7 +105,7 @@ python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/zeshel/dev.query.txt  \
+    --query_path $RAW_DIR/dev.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
@@ -114,14 +114,14 @@ python -m src.taco.driver.retrieve  \
     --trec_save_path $RESULT_DIR/zeshel/dev.trec \
     --dataloader_num_workers 0
 
-$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/zeshel/dev.qrel.trec $RESULT_DIR/zeshel/dev.trec > $RESULT_DIR/zeshel/dev_results.txt
+$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/zeshel/dev.trec > $RESULT_DIR/zeshel/dev_results.txt
 echo "building val hard negatives of ance first episode for zeshel ..."
 mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
 python src/taco/dataset/build_hn.py  \
     --tokenizer_name $PLM_DIR/t5-base-scaled  \
     --hn_file $RESULT_DIR/zeshel/dev.trec \
-    --qrels $RAW_DIR/zeshel/dev.qrel.tsv \
-    --queries $RAW_DIR/zeshel/dev.query.txt \
+    --qrels $RAW_DIR/dev.qrel.tsv \
+    --queries $RAW_DIR/dev.query.txt \
     --collection $RAW_DIR/psg_corpus_dev.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
@@ -159,7 +159,7 @@ python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/zeshel/test.query.txt  \
+    --query_path $RAW_DIR/test.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
@@ -168,7 +168,7 @@ python -m src.taco.driver.retrieve  \
     --trec_save_path $RESULT_DIR/zeshel/test.trec \
     --dataloader_num_workers 0
 
-$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/zeshel/test.qrel.trec $RESULT_DIR/zeshel/test.trec > $RESULT_DIR/zeshel/test_results.txt
+$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/zeshel/test.trec > $RESULT_DIR/zeshel/test_results.txt
 
 echo "get preprocessed data of zeshel for ance training"
 echo "building train index for zeshel"
@@ -190,7 +190,7 @@ python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/zeshel/train.query.txt  \
+    --query_path $RAW_DIR/train.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
@@ -205,8 +205,8 @@ mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
 python src/taco/dataset/build_hn.py  \
     --tokenizer_name $PLM_DIR/t5-base-scaled  \
     --hn_file $RESULT_DIR/zeshel/train.trec \
-    --qrels $RAW_DIR/zeshel/train.qrel.tsv \
-    --queries $RAW_DIR/zeshel/train.query.txt \
+    --qrels $RAW_DIR/train.qrel.tsv \
+    --queries $RAW_DIR/train.query.txt \
     --collection $RAW_DIR/psg_corpus_train.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \

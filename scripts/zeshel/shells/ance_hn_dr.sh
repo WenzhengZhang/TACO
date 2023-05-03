@@ -69,7 +69,7 @@ do
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/zeshel/dev.query.txt  \
+        --query_path $RAW_DIR/dev.query.txt  \
         --encoder_only False  \
         --query_template "<text>"  \
         --query_column_names  id,text \
@@ -84,8 +84,8 @@ do
     python src/taco/dataset/build_hn.py  \
         --tokenizer_name $PLM_DIR/t5-base-scaled  \
         --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
-        --qrels $RAW_DIR/zeshel/dev.qrel.tsv \
-        --queries $RAW_DIR/zeshel/dev.query.txt \
+        --qrels $RAW_DIR/dev.qrel.tsv \
+        --queries $RAW_DIR/dev.query.txt \
         --collection $RAW_DIR/psg_corpus_dev.tsv \
         --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
         --template "Title: <title> Text: <text>" \
@@ -117,7 +117,7 @@ do
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/zeshel/train.query.txt  \
+        --query_path $RAW_DIR/train.query.txt  \
         --encoder_only False  \
         --query_template "<text>"  \
         --query_column_names  id,text \
@@ -131,8 +131,8 @@ do
     python src/taco/dataset/build_hn.py  \
         --tokenizer_name $PLM_DIR/t5-base-scaled  \
         --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
-        --qrels $RAW_DIR/zeshel/train.qrel.tsv \
-        --queries $RAW_DIR/zeshel/train.query.txt \
+        --qrels $RAW_DIR/train.qrel.tsv \
+        --queries $RAW_DIR/train.query.txt \
         --collection $RAW_DIR/psg_corpus.tsv \
         --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
         --template "Title: <title> Text: <text>" \
@@ -218,7 +218,7 @@ do
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/zeshel/dev.query.txt  \
+        --query_path $RAW_DIR/dev.query.txt  \
         --encoder_only False  \
         --query_template "<text>"  \
         --query_column_names  id,text \
@@ -227,7 +227,7 @@ do
         --trec_save_path $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/dev.trec \
         --dataloader_num_workers 0
 
-    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/zeshel/dev.qrel.trec $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/dev_results.txt
+    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/dev_results.txt
 
     echo "evaluating zeshel test for episode-${hn_iter} ..."
     echo "building index for zeshel test for episode-${hn_iter} "
@@ -254,7 +254,7 @@ do
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/zeshel/test.query.txt  \
+        --query_path $RAW_DIR/test.query.txt  \
         --encoder_only False  \
         --query_template "<text>"  \
         --query_column_names  id,text \
@@ -263,7 +263,7 @@ do
         --trec_save_path $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/test.trec \
         --dataloader_num_workers 0
 
-    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/zeshel/test.qrel.trec $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/test.trec > $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/test_results.txt
+    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/test.trec > $RESULT_DIR/zeshel/hn_iter_${new_hn_iter}/test_results.txt
 done
 echo "deleting embedding cache"
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*
