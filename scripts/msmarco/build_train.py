@@ -73,7 +73,7 @@ with open(args.negative_file) as nf:
     with Pool() as p:
         for x in p.imap(processor.process_one, pbar,
                         chunksize=args.mp_chunk_size):
-            tokenized_example = x[0], x[1]
+            tokenized_example = x
             counter += 1
             total_cntr += 1
             if encoded_data_file is None:
@@ -84,9 +84,9 @@ with open(args.negative_file) as nf:
             buffer_encoded.append(tokenized_example)
 
             if counter == args.shard_size:
-                for x in buffer_encoded:
-                    encoded_data_file.write(
-                        x + '\n')  # save the encoded version
+                for y in buffer_encoded:
+                    encoded_data_file.write(y + '\n')  # save the encoded
+                    # version
                 buffer_encoded = []
                 encoded_data_file.close()
                 encoded_data_file = None
@@ -97,8 +97,8 @@ with open(args.negative_file) as nf:
 
 # cleanup any stragglers
 if encoded_data_file is not None:
-    for x in buffer_encoded:
-        encoded_data_file.write(x + '\n')  # save the encoded version
+    for y in buffer_encoded:
+        encoded_data_file.write(y + '\n')  # save the encoded version
     encoded_data_file.close()
 
 print(
