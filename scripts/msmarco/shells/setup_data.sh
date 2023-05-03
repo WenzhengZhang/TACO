@@ -119,18 +119,16 @@ else
         --queries $RAW_DIR/train.query.txt  \
         --collection $RAW_DIR/psg_corpus.tsv  \
         --save_to $PROCESSED_DIR/  \
-        --template "Title: <title> Text: <text>"
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs
 
     echo "Concatenating output shards...";
 
     cd $PROCESSED_DIR/
     cat encoded_split-*.jsonl > train.jsonl
-    cat split-*.jsonl > train_text.jsonl
 
     tail -n 500 train.jsonl > val.jsonl
-    tail -n 500 train_text.jsonl > val_text.jsonl
     head -n -500 train.jsonl > train.jsonl
-    head -n -500 train_text.jsonl > train_text.jsonl
 
     echo "Done setting up data and environments";
 
