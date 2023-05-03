@@ -57,6 +57,7 @@ if __name__ == '__main__':
     parser.add_argument('--shuffle_negatives', action='store_true')
     parser.add_argument('--add_rand_negs', action='store_true')
     parser.add_argument('--use_doc_id_map', action='store_true')
+    parser.add_argument('--split', type=str, default='train')
 
     args = parser.parse_args()
     random.seed(args.seed)
@@ -89,7 +90,7 @@ if __name__ == '__main__':
                 if f is None:
                     f = open(
                         os.path.join(args.save_to,
-                                     f'train.split{shard_id:02d}.jsonl'),
+                                     f'{args.split}.split{shard_id:02d}.jsonl'),
                         'w')
                     pbar.set_description(f'split - {shard_id:02d}')
                 f.write(x + '\n')
@@ -103,7 +104,7 @@ if __name__ == '__main__':
         if f is not None:
             f.close()
     else:
-        with open(os.path.join(args.save_to, 'train_all.jsonl'), 'w') as f:
+        with open(os.path.join(args.save_to, '{args.split}_all.jsonl'), 'w') as f:
             with Pool() as p:
                 for x in p.imap(processor.process_one, pbar,
                                 chunksize=args.mp_chunk_size):

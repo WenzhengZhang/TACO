@@ -4,6 +4,7 @@ import csv
 import os
 
 
+# TODO: get both trec and tsv file for dev/test
 def load_data(data_dir):
     """
     :param data_dir
@@ -51,15 +52,14 @@ def load_data(data_dir):
 
 def process_query(samples, doc, output_dir, split, max_len):
     query_path = os.path.join(output_dir, f"{split}.query.txt")
-    if split == 'train':
-        ext = 'tsv'
-    else:
-        ext = 'trec'
-    qrel_path = os.path.join(output_dir, f"{split}.qrel.{ext}")
+    if split != 'train':
+        trec_path = os.path.join(output_dir, f"{split}.qrel.trec")
+        f_trec = open(trec_path, 'w')
+        tsv_trec = csv.writer(f_trec, delimiter=" ")
+    qrel_path = os.path.join(output_dir, f"{split}.qrel.tsv")
     with open(query_path, 'w') as f_query, open(qrel_path, 'w') as f_qrel:
         tsv_query = csv.writer(f_query, delimiter="\t")
-        delimiter_qrel = "\t" if split == 'train' else " "
-        tsv_qrel = csv.writer(f_qrel, delimiter=delimiter_qrel)
+        tsv_qrel = csv.writer(f_qrel, delimiter="\t")
         for item in samples:
             qid = item["mention_id"]
             ctxt = doc[item["context_document_id"]]
@@ -68,6 +68,10 @@ def process_query(samples, doc, output_dir, split, max_len):
             d_id = item["label_document_id"]
             tsv_query.writerow([qid, query_text])
             tsv_qrel.writerow([qid, 0, d_id, 1])
+            if split != 'train':
+                tsv_trec.writerow([qid, 0, d_id, 1])
+    if split != 'train':
+        f_trec.close()
 
 
 def process_corpus(doc, output_dir, split):
@@ -107,12 +111,12 @@ def main(args):
     print("load original data ... ")
     samples_train, samples_val, samples_test, \
     train_doc, val_doc, test_doc = load_data(args.input_dir)
-    print('process train corpus ... ')
-    process_corpus(train_doc, args.output_dir, 'train')
-    print('process dev corpus ... ')
-    process_corpus(val_doc, args.output_dir, 'dev')
-    print('process test corpus ... ')
-    process_corpus(test_doc, args.output_dir, 'test')
+    # print('process train corpus ... ')
+    # process_corpus(train_doc, args.output_dir, 'train')
+    # print('process dev corpus ... ')
+    # process_corpus(val_doc, args.output_dir, 'dev')
+    # print('process test corpus ... ')
+    # process_corpus(test_doc, args.output_dir, 'test')
     print('process train query and qrel ... ')
     process_query(samples_train, train_doc, args.output_dir, 'train',
                   args.max_len)

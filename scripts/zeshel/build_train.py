@@ -91,7 +91,7 @@ if __name__ == '__main__':
         if f is not None:
             f.close()
     else:
-        with open(os.path.join(args.save_to, 'train_all.jsonl'), 'w') as f:
+        with open(os.path.join(args.save_to, 'train.jsonl'), 'w') as f:
             with Pool() as p:
                 for x in p.imap(processor.process_one, pbar,
                                 chunksize=args.mp_chunk_size):

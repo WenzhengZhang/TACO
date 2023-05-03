@@ -74,9 +74,7 @@ do
             --fp16  \
             --trec_save_path $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/train.trec \
             --dataloader_num_workers 0 \
-            --topk 110 \
-            --task_name ${kilt_set^^} \
-            --add_query_task_prefix True
+            --topk 110
         echo "building hard negatives of ance first episode for ${kilt_set} ..."
         mkdir -p $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}
         python src/taco/dataset/build_hn.py  \
