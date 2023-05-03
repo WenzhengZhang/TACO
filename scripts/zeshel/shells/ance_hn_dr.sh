@@ -3,13 +3,13 @@ HOME_DIR="/common/users/wz283/projects/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/zeshel/hard_nce_dr/"
+MODEL_DIR=$TACO_DIR"/model/zeshel/ance_hn_dr/"
 DATA_DIR=$TACO_DIR"/data/zeshel/"
 RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/hard_nce_dr/"
-LOG_DIR=$TACO_DIR"/logs/zeshel/hard_nce_dr/"
-EMBEDDING_DIR=$TACO_DIR"/embeddings/hard_nce_dr/"
-RESULT_DIR=$TACO_DIR"/results/hard_nce_dr/"
+PROCESSED_DIR=$DATA_DIR"/processed/ance_hn_dr/"
+LOG_DIR=$TACO_DIR"/logs/zeshel/ance_hn_dr/"
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_hn_dr/"
+RESULT_DIR=$TACO_DIR"/results/ance_hn_dr/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
@@ -33,14 +33,14 @@ epoch=4
 p_len=160
 max_q_len=128
 log_step=100
-n_passages=64
+n_passages=3
 rands_ratio=0.5
 num_hn_iters=4
 epoch_per_hn=1
 lr=1e-5
 dr=1
 n_gpu=8
-bsz=2
+bsz=16
 infer_bsz=256
 steps=250
 n_gpu=8
@@ -76,7 +76,8 @@ do
         --q_max_len $max_q_len  \
         --fp16  \
         --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
-        --dataloader_num_workers 0
+        --dataloader_num_workers 0 \
+        --topk 100
     fi
     echo "building val hard negatives for zeshel ..."
     mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
@@ -170,16 +171,16 @@ do
         --num_train_epochs $epoch  \
         --epochs_per_hn $epoch_per_hn \
         --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
-        --negatives_x_device False \
+        --negatives_x_device True \
         --remove_unused_columns False \
         --overwrite_output_dir True \
         --dataloader_num_workers 0 \
         --multi_label False \
-        --in_batch_negatives False \
+        --in_batch_negatives True \
         --pooling first \
         --positive_passage_no_shuffle True \
         --negative_passage_no_shuffle True \
-        --add_rand_negs True \
+        --add_rand_negs False \
         --encoder_only False \
         --save_total_limit 2 \
         --load_best_model_at_end False \

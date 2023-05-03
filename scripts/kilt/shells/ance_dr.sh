@@ -130,7 +130,7 @@ do
           --add_rand_negs False \
           --encoder_only False \
           --save_total_limit 2 \
-          --load_best_model_at_end True \
+          --load_best_model_at_end False \
           --metric_for_best_model loss
 
       echo "evaluating ${kilt_set} for episode-${hn_iter} ..."
