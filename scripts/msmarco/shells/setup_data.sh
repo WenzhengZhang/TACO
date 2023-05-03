@@ -130,7 +130,7 @@ else
     tail -n 500 train.jsonl > val.jsonl
     head -n -500 train.jsonl > train_all.jsonl
     export RANDOM=42
-    shuf -n train_all.jsonl > train.jsonl
+    shuf -n 100000 train_all.jsonl > train.jsonl
 
     echo "Done setting up data and environments";
 
