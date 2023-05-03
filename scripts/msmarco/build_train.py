@@ -12,7 +12,6 @@ from taco.utils import SimpleTrainPreProcessor as TrainDataPreProcessor
 OUTPUT_TEXT_FILE_NAME = "split"
 OUTPUT_ENCODED_FILE_NAME = "encoded_split"
 
-random.seed(datetime.now())
 parser = ArgumentParser()
 parser.add_argument('--tokenizer_name', required=True)
 parser.add_argument('--negative_file', required=True)
@@ -32,6 +31,7 @@ parser.add_argument('--shuffle_negatives', action='store_true')
 parser.add_argument('--shard_hn', action='store_true')
 parser.add_argument('--num_hards', type=int, default=30)
 parser.add_argument('--num_rands', type=int, default=30)
+parser.add_argument('--seed', type=int, default=42)
 
 args = parser.parse_args()
 
@@ -40,7 +40,7 @@ total_cntr = 0
 shard_id = 0
 encoded_data_file = None
 os.makedirs(args.save_to, exist_ok=True)
-
+random.seed(args.seed)
 qrel = TrainDataPreProcessor.read_qrel(args.qrels)
 print(
     f"build_train.py: loaded qrel file from {args.qrels}, containining {len(qrel)} entries")
