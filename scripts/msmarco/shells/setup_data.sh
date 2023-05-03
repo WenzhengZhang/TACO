@@ -126,6 +126,7 @@ else
 
     cd $PROCESSED_DIR/
     cat encoded_split-*.jsonl > train.jsonl
+    rm encoded_split-*.jsonl
 
     tail -n 500 train.jsonl > val.jsonl
     head -n -500 train.jsonl > train_all.jsonl
