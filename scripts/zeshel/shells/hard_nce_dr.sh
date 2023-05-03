@@ -49,7 +49,7 @@ for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iters++))
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
-    if [ $hn_iter != 0 ]; then
+    if [ $hn_iter != "0" ]; then
       echo "build dev index and retrieve for the first episode"
       echo "build index ... "
       torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
