@@ -37,5 +37,7 @@ else
         --num_rands 64 \
         --num_hards 64 \
         --truncate 128 \
-        --use_doc_id_map
+        --use_doc_id_map \
+        --seed 42 \
+        --hn_file $ORIG_DIR/tfidf_candidates/train.json
 fi
