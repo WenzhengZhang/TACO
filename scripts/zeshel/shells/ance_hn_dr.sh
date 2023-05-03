@@ -41,7 +41,7 @@ lr=1e-5
 dr=1
 n_gpu=8
 bsz=16
-infer_bsz=256
+infer_bsz=1024
 steps=250
 n_gpu=8
 

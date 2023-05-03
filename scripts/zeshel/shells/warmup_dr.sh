@@ -37,7 +37,7 @@ p_len=160
 log_step=100
 bsz=16
 n_passages=3
-infer_bsz=256
+infer_bsz=1024
 n_gpu=8
 max_q_len=128
 
