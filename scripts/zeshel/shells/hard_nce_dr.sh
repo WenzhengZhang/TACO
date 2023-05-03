@@ -88,10 +88,13 @@ do
         --collection $RAW_DIR/psg_corpus_dev.tsv \
         --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
         --template "Title: <title> Text: <text>" \
-        --add_rand_negs True \
+        --add_rand_negs \
         --num_hards 64 \
         --num_rands 64 \
-        --split dev
+        --split dev \
+        --seed ${hn_iter} \
+        --use_doc_id_map \
+        --truncate $p_len
     echo "splitting zeshel dev hn file"
     tail -n 500 $PROCESSED_DIR/hn_iter_${hn_iter}/dev_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/val.jsonl
     echo "building train index for zeshel"
@@ -133,10 +136,13 @@ do
         --collection $RAW_DIR/psg_corpus.tsv \
         --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
         --template "Title: <title> Text: <text>" \
-        --add_rand_negs True \
+        --add_rand_negs \
         --num_hards 64 \
         --num_rands 64 \
-        --split train
+        --split train \
+        --seed ${hn_iter} \
+        --use_doc_id_map \
+        --truncate $p_len
 
     echo "removing training trec file of zeshel"
     rm $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec

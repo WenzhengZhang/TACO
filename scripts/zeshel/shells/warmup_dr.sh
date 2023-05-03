@@ -125,10 +125,13 @@ python src/taco/dataset/build_hn.py  \
     --collection $RAW_DIR/psg_corpus_dev.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
-    --add_rand_negs True \
+    --add_rand_negs \
     --num_hards 64 \
     --num_rands 64 \
-    --split dev
+    --split dev \
+    --seed 42 \
+    --use_doc_id_map \
+    --truncate $p_len
 
 echo "splitting zeshel dev hn file"
 tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
@@ -207,10 +210,13 @@ python src/taco/dataset/build_hn.py  \
     --collection $RAW_DIR/psg_corpus_train.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
-    --add_rand_negs True \
+    --add_rand_negs \
     --num_hards 64 \
     --num_rands 64 \
-    --split train
+    --split train \
+    --seed 42 \
+    --use_doc_id_map \
+    --truncate $p_len
 
 echo "removing train zeshel trec files"
 rm $RESULT_DIR/zeshel/train.trec
