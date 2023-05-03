@@ -7,7 +7,7 @@ PLM_DIR=$TACO_DIR"/plm/"
 MODEL_DIR=$TACO_DIR"/model/msmarco"
 DATA_DIR=$TACO_DIR"/data/msmarco/"
 RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/"
+PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/"
 ORIG_DIR=$DATA_DIR"/original/"
 mkdir -p $TACO_DIR
@@ -17,7 +17,7 @@ mkdir -p $DATA_DIR
 mkdir -p $RAW_DIR
 mkdir -p $PROCESSED_DIR
 mkdir -p $EVAL_DIR
-mkdir -p $PROCESSED_DIR/"bm25/"
+mkdir -p $PROCESSED_DIR
 mkdir -p $ORIG_DIR
 
 
