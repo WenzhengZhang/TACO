@@ -95,9 +95,9 @@ class Retriever:
             )
         else:
             if self.args.local_rank != -1:
-                eval_sampler = SequentialSampler(self.corpus_dataset)
-            else:
                 eval_sampler = SequentialDistributedSampler(self.corpus_dataset)
+            else:
+                eval_sampler = SequentialSampler(self.corpus_dataset)
             dataloader = DataLoader(
                 self.corpus_dataset,
                 sampler=eval_sampler,
