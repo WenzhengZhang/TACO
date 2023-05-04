@@ -108,27 +108,27 @@ if __name__ == '__main__':
     parser.add_argument('--verify_corpus', action='store_true')
     args = parser.parse_args()
     dataset_name = args.dataset_name
-    print('process corpus ... ')
-    process_corpus(args.input_dir, args.processed_dir, dataset_name)
-    print('process qrels test')
-    test_qids = process_qrel(args.input_dir, args.processed_dir, dataset_name,
-                             'test')
-    print('process queries test ... ')
-    process_query(args.input_dir, args.processed_dir, dataset_name,
-                  test_qids, 'test')
-    if args.process_train:
-        print('process qrels train ... ')
-        train_qids = process_qrel(args.input_dir, args.processed_dir,
-                                  dataset_name, 'train')
-        print('process queries train ... ')
-        process_query(args.input_dir, args.processed_dir, dataset_name,
-                      train_qids, 'train')
-    if args.process_dev:
-        print('process qrels dev ... ')
-        dev_qids = process_qrel(args.input_dir, args.processed_dir,
-                                dataset_name, 'dev')
-        print('process queries dev ... ')
-        process_query(args.input_dir, args.processed_dir, dataset_name,
-                      dev_qids, 'dev')
+    # print('process corpus ... ')
+    # process_corpus(args.input_dir, args.processed_dir, dataset_name)
+    # print('process qrels test')
+    # test_qids = process_qrel(args.input_dir, args.processed_dir, dataset_name,
+    #                          'test')
+    # print('process queries test ... ')
+    # process_query(args.input_dir, args.processed_dir, dataset_name,
+    #               test_qids, 'test')
+    # if args.process_train:
+    #     print('process qrels train ... ')
+    #     train_qids = process_qrel(args.input_dir, args.processed_dir,
+    #                               dataset_name, 'train')
+    #     print('process queries train ... ')
+    #     process_query(args.input_dir, args.processed_dir, dataset_name,
+    #                   train_qids, 'train')
+    # if args.process_dev:
+    #     print('process qrels dev ... ')
+    #     dev_qids = process_qrel(args.input_dir, args.processed_dir,
+    #                             dataset_name, 'dev')
+    #     print('process queries dev ... ')
+    #     process_query(args.input_dir, args.processed_dir, dataset_name,
+    #                   dev_qids, 'dev')
     if args.verify_corpus:
         check_corpus(args.processed_dir, dataset_name, args.cache_dir)
