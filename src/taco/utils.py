@@ -114,6 +114,7 @@ class SimpleTrainPreProcessor:
             data_files=self.collection_file,
             column_names=self.columns,
             delimiter='\t',
+            keep_default_na=False
         )['train']
         if self.use_doc_id_map:
             self.doc_id_map = self.get_doc_id_map()

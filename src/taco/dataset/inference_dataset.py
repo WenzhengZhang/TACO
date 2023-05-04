@@ -109,7 +109,8 @@ class TsvMapDataset(InferenceMapDataset):
             data_files=self.data_files,
             column_names=self.all_columns,
             delimiter='\t',
-            cache_dir=cache_dir
+            cache_dir=cache_dir,
+            keep_default_na=False
         )["train"]
         if self.all_columns is None:
             sample = self.dataset[0]
@@ -337,7 +338,8 @@ class StreamTsvDataset(StreamInferenceDataset, InferenceDataset):
             streaming=True,
             column_names=self.all_columns,
             delimiter='\t',
-            cache_dir=self.cache_dir
+            cache_dir=self.cache_dir,
+            keep_default_na=False
         )["train"].filter(self.filter_fn)
 
 
@@ -353,7 +355,8 @@ class MappingTsvDataset(MappingInferenceDataset, InferenceDataset):
             streaming=False,
             column_names=self.all_columns,
             delimiter='\t',
-            cache_dir=self.cache_dir
+            cache_dir=self.cache_dir,
+            keep_default_na=False
         )["train"].filter(self.filter_fn)
         if self.all_columns is None:
             sample = self.dataset[0]
