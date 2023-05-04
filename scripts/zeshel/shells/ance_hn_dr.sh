@@ -30,13 +30,13 @@ mkdir -p $EVAL_DIR
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 
 eval_delay=0
-epoch=4
+epoch=8
 p_len=160
 max_q_len=128
 log_step=100
 n_passages=3
 rands_ratio=0.5
-num_hn_iters=4
+num_hn_iters=8
 epoch_per_hn=1
 lr=1e-5
 dr=1
