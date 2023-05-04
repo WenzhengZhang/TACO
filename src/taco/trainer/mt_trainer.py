@@ -7,6 +7,7 @@ import pickle
 import numpy as np
 import torch.nn.functional as F
 from scipy.stats import entropy
+import warnings
 import random
 import time
 import datasets
@@ -22,7 +23,7 @@ from torch.utils.data import DataLoader, Dataset
 from ..utils import get_task_hps
 from transformers.trainer import Trainer, TRAINER_STATE_NAME
 from transformers.trainer_pt_utils import IterableDatasetShard, \
-    is_sagemaker_mp_enabled, nested_detach
+    is_sagemaker_mp_enabled, nested_detach, reissue_pt_warnings
 
 if is_sagemaker_mp_enabled():
     import smdistributed.modelparallel.torch as smp
@@ -41,7 +42,8 @@ from transformers.trainer_utils import (
     ShardedDDPOption,
     TrainOutput,
     has_length,
-    speed_metrics
+    speed_metrics,
+    PREFIX_CHECKPOINT_DIR
 )
 from transformers.deepspeed import deepspeed_init
 from transformers.trainer_callback import TrainerState
@@ -70,6 +72,13 @@ try:
     _grad_cache_available = True
 except ModuleNotFoundError:
     _grad_cache_available = False
+
+TRAINING_ARGS_NAME = "training_args.bin"
+TRAINER_STATE_NAME = "trainer_state.json"
+OPTIMIZER_NAME = "optimizer.pt"
+SCHEDULER_NAME = "scheduler.pt"
+SCALER_NAME = "scaler.pt"
+IPT_EXP_NAME = "ipt_exp.pt"
 
 """
 support features:
@@ -117,8 +126,7 @@ class MTDenseTrainer(DenseTrainer):
         self.grad_idx_cumsum = self.get_grad_cumsum().tolist()
         self.grad_dim = self.grad_idx_cumsum[-1]
         if self.args.weight_method == 'taco':
-            self.ipt_exp = torch.zeros((self.num_tasks, self.grad_dim)).to(
-                self.args.device)
+            self.ipt_exp = None
             self.eps = 1e-12
             # self.taco_warmup_steps = int(self.state.max_steps *
             #                              self.args.warmup_ratio)
@@ -128,6 +136,17 @@ class MTDenseTrainer(DenseTrainer):
             assert self.args.gradient_accumulation_steps == 1, \
                 f"we don't allow gradient accumulation > 1 for " \
                 f"{self.args.weight_method}"
+
+    def load_ipt_exp(self, checkpoint=None):
+        if checkpoint is None:
+            self.ipt_exp = torch.zeros((self.num_tasks, self.grad_dim)).to(
+                self.args.device)
+        else:
+            map_location = self.args.device if self.args.world_size > 1 else \
+                "cpu"
+            ipt_path = os.path.join(checkpoint, IPT_EXP_NAME)
+            ipt_sd = torch.load(ipt_path, map_location=map_location)
+            self.ipt_exp = ipt_sd['ipt_exp'].to(self.args.device)
 
     def get_selection_masks(self):
         masks = torch.zeros(self.grad_dim)
@@ -1254,6 +1273,129 @@ class MTDenseTrainer(DenseTrainer):
 
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         logger.info(f"Loading model from {resume_from_checkpoint}.")
+
+    def _save_checkpoint(self, model, trial, metrics=None):
+        # In all cases, including ddp/dp/deepspeed, self.model is always a reference to the model we
+        # want to save except FullyShardedDDP.
+        # assert unwrap_model(model) is self.model, "internal model should be a reference to self.model"
+
+        # Save model checkpoint
+        checkpoint_folder = f"{PREFIX_CHECKPOINT_DIR}-{self.state.global_step}"
+
+        if self.hp_search_backend is None and trial is None:
+            self.store_flos()
+
+        run_dir = self._get_output_dir(trial=trial)
+        output_dir = os.path.join(run_dir, checkpoint_folder)
+        self.save_model(output_dir, _internal_call=True)
+        if self.deepspeed:
+            # under zero3 model file itself doesn't get saved since it's bogus! Unless deepspeed
+            # config `stage3_gather_16bit_weights_on_model_save` is True
+            self.deepspeed.save_checkpoint(output_dir)
+
+        # Save optimizer and scheduler
+        if self.sharded_ddp == ShardedDDPOption.SIMPLE:
+            self.optimizer.consolidate_state_dict()
+
+        if is_torch_tpu_available():
+            xm.rendezvous("saving_optimizer_states")
+            xm.save(self.optimizer.state_dict(), os.path.join(output_dir,
+                                                              OPTIMIZER_NAME))
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                xm.save(self.lr_scheduler.state_dict(), os.path.join(output_dir,
+                                                                     SCHEDULER_NAME))
+                reissue_pt_warnings(caught_warnings)
+        elif is_sagemaker_mp_enabled():
+            opt_state_dict = self.optimizer.local_state_dict(
+                gather_if_shard=False)
+            smp.barrier()
+            if smp.rdp_rank() == 0 or smp.state.cfg.shard_optimizer_state:
+                smp.save(
+                    opt_state_dict,
+                    os.path.join(output_dir, OPTIMIZER_NAME),
+                    partial=True,
+                    v3=smp.state.cfg.shard_optimizer_state,
+                )
+            if self.args.should_save:
+                with warnings.catch_warnings(record=True) as caught_warnings:
+                    torch.save(self.lr_scheduler.state_dict(),
+                               os.path.join(output_dir, SCHEDULER_NAME))
+                reissue_pt_warnings(caught_warnings)
+                if self.do_grad_scaling:
+                    torch.save(self.scaler.state_dict(),
+                               os.path.join(output_dir, SCALER_NAME))
+        elif self.args.should_save and not self.deepspeed:
+            # deepspeed.save_checkpoint above saves model/optim/sched
+            torch.save(self.optimizer.state_dict(), os.path.join(output_dir,
+                                                                 OPTIMIZER_NAME))
+            with warnings.catch_warnings(record=True) as caught_warnings:
+                torch.save(self.lr_scheduler.state_dict(),
+                           os.path.join(output_dir,
+                                        SCHEDULER_NAME))
+            reissue_pt_warnings(caught_warnings)
+            if self.do_grad_scaling:
+                torch.save(self.scaler.state_dict(), os.path.join(output_dir,
+                                                                  SCALER_NAME))
+
+        # Determine the new best metric / best model checkpoint
+        if metrics is not None and self.args.metric_for_best_model is not None:
+            metric_to_check = self.args.metric_for_best_model
+            if not metric_to_check.startswith("eval_"):
+                metric_to_check = f"eval_{metric_to_check}"
+            metric_value = metrics[metric_to_check]
+
+            operator = np.greater if self.args.greater_is_better else np.less
+            if (
+                    self.state.best_metric is None
+                    or self.state.best_model_checkpoint is None
+                    or operator(metric_value, self.state.best_metric)
+            ):
+                self.state.best_metric = metric_value
+                self.state.best_model_checkpoint = output_dir
+
+        # Save the Trainer state
+        if self.args.should_save:
+            self.state.save_to_json(
+                os.path.join(output_dir, TRAINER_STATE_NAME))
+            if self.args.weight_method == 'taco':
+                ipt_exp_sd = {'ipt_exp': self.ipt_exp}
+                torch.save(
+                    ipt_exp_sd,
+                    os.path.join(output_dir, IPT_EXP_NAME)
+                )
+
+        # Save RNG state in non-distributed training
+        rng_states = {
+            "python": random.getstate(),
+            "numpy": np.random.get_state(),
+            "cpu": torch.random.get_rng_state(),
+        }
+        if torch.cuda.is_available():
+            if self.args.local_rank == -1:
+                # In non distributed, we save the global CUDA RNG state (will take care of DataParallel)
+                rng_states["cuda"] = torch.cuda.random.get_rng_state_all()
+            else:
+                rng_states["cuda"] = torch.cuda.random.get_rng_state()
+
+        if is_torch_tpu_available():
+            rng_states["xla"] = xm.get_rng_state()
+
+        # A process can arrive here before the process 0 has a chance to save the model, in which case output_dir may
+        # not yet exist.
+        os.makedirs(output_dir, exist_ok=True)
+
+        if self.args.world_size <= 1:
+            torch.save(rng_states, os.path.join(output_dir, "rng_state.pth"))
+        else:
+            torch.save(rng_states, os.path.join(output_dir,
+                                                f"rng_state_{self.args.process_index}.pth"))
+
+        if self.args.push_to_hub:
+            self._push_from_checkpoint(output_dir)
+
+        # Maybe delete some older checkpoints.
+        if self.args.should_save:
+            self._rotate_checkpoints(use_mtime=True, output_dir=run_dir)
 
 
 class MultiTaskTBCallback(TensorBoardCallback):

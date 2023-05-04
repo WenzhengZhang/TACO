@@ -138,9 +138,14 @@ def main():
     if training_args.resume_from_checkpoint is not None and \
             training_args.resume_from_checkpoint != False and \
             training_args.resume_from_checkpoint != "False":
+        if training_args.weight_method == 'taco':
+            trainer.load_ipt_exp(
+                checkpoint=training_args.resume_from_checkpoint)
         trainer.train(
             resume_from_checkpoint=training_args.resume_from_checkpoint)
     else:
+        if training_args.weight_method == 'taco':
+            trainer.load_ipt_exp(checkpoint=None)
         trainer.train()
     trainer.save_model()
     if trainer.is_world_process_zero():
