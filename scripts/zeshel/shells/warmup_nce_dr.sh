@@ -31,7 +31,7 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=4
+epoch=10
 lr=1e-5
 p_len=160
 log_step=100
@@ -65,7 +65,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --p_max_len $p_len \
     --num_train_epochs $epoch  \
     --logging_dir $LOG_DIR/zeshel  \
-    --negatives_x_device True \
+    --negatives_x_device False \
     --remove_unused_columns False \
     --overwrite_output_dir True \
     --dataloader_num_workers 0 \
@@ -225,9 +225,11 @@ rm $RESULT_DIR/zeshel/train.trec
 
 echo "splitting zeshel train hn file"
 
-mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
+mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl  $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
 
 
+echo "remove checkpoints"
+rm $MODEL_DIR/checkpoint-*
 echo "moving warmed up model to ance iter 0 model folder for zeshel"
 mv $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings for zeshel"

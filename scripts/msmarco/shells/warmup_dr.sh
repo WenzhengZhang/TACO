@@ -4,16 +4,16 @@ CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/zeshel/warmup_dr/"
-DATA_DIR=$TACO_DIR"/data/zeshel/"
+MODEL_DIR=$TACO_DIR"/model/msmarco/warmup_dr/"
+DATA_DIR=$TACO_DIR"/data/msmarco/"
 RAW_DIR=$DATA_DIR"/raw/"
 PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
-LOG_DIR=$TACO_DIR"/logs/zeshel/warmup_dr/"
+LOG_DIR=$TACO_DIR"/logs/msmarco/warmup_dr/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_dr/"
 RESULT_DIR=$TACO_DIR"/results/warmup_dr/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 ANCE_PROCESSED_DIR=$DATA_DIR"/processed/ance_dr/"
-ANCE_MODEL_DIR=$TACO_DIR"/model/zeshel/ance_dr/"
+ANCE_MODEL_DIR=$TACO_DIR"/model/msmarco/ance_dr/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
@@ -45,7 +45,7 @@ max_q_len=128
 cd $CODE_DIR
 export PYTHONPATH=.
 
-echo "start warmup training of zeshel"
+echo "start warmup training of msmarco"
 
 torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_dr.py \
     --output_dir $MODEL_DIR  \
@@ -83,13 +83,13 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
 
 
 
-echo "building dev index for zeshel"
+echo "building dev index for msmarco"
 #  python src/taco/driver/build_index.py  \
 torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
+    --corpus_path $RAW_DIR/psg_corpus.tsv  \
     --encoder_only False  \
     --doc_template "Title: <title> Text: <text>"  \
     --doc_column_names id,title,text \
@@ -98,9 +98,9 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_i
     --fp16  \
     --dataloader_num_workers 0
 
-echo "retrieve dev data of zeshel ... "
-if [ ! -d "$RESULT_DIR/zeshel" ]; then
-    mkdir -p $RESULT_DIR/zeshel
+echo "retrieve dev data of msmarco ... "
+if [ ! -d "$RESULT_DIR/msmarco" ]; then
+    mkdir -p $RESULT_DIR/msmarco
 fi
 
 python -m src.taco.driver.retrieve  \
@@ -113,102 +113,41 @@ python -m src.taco.driver.retrieve  \
     --query_column_names  id,text \
     --q_max_len $max_q_len  \
     --fp16  \
-    --trec_save_path $RESULT_DIR/zeshel/dev.trec \
+    --trec_save_path $RESULT_DIR/msmarco/dev.trec \
     --dataloader_num_workers 0
 
-$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/zeshel/dev.trec > $RESULT_DIR/zeshel/dev_results.txt
-echo "building val hard negatives of ance first episode for zeshel ..."
-mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
-python src/taco/dataset/build_hn.py  \
-    --tokenizer_name $PLM_DIR/t5-base-scaled  \
-    --hn_file $RESULT_DIR/zeshel/dev.trec \
-    --qrels $RAW_DIR/dev.qrel.tsv \
-    --queries $RAW_DIR/dev.query.txt \
-    --collection $RAW_DIR/psg_corpus_dev.tsv \
-    --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
-    --template "Title: <title> Text: <text>" \
-    --num_hards 64 \
-    --num_rands 64 \
-    --split dev \
-    --seed 42 \
-    --use_doc_id_map \
-    --truncate $p_len
+$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/msmarco/dev.trec > $RESULT_DIR/msmarco/dev_results.txt
 
-echo "splitting zeshel dev hn file"
-tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
-#rm $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl
-
-
-echo "building test index for zeshel"
+echo "get preprocessed data of msmarco for ance training"
 #  python src/taco/driver/build_index.py  \
-torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_test.tsv  \
-    --encoder_only False  \
-    --doc_template "Title: <title> Text: <text>"  \
-    --doc_column_names id,title,text \
-    --q_max_len $max_q_len  \
-    --p_max_len $p_len  \
-    --fp16  \
-    --dataloader_num_workers 0
 
-echo "retrieve test data of zeshel ... "
 
-python -m src.taco.driver.retrieve  \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/test.query.txt  \
-    --encoder_only False  \
-    --query_template "<text>"  \
-    --query_column_names  id,text \
-    --q_max_len $max_q_len  \
-    --fp16  \
-    --trec_save_path $RESULT_DIR/zeshel/test.trec \
-    --dataloader_num_workers 0
-
-$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/zeshel/test.trec > $RESULT_DIR/zeshel/test_results.txt
-
-echo "get preprocessed data of zeshel for ance training"
-echo "building train index for zeshel"
-#  python src/taco/driver/build_index.py  \
-torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_train.tsv  \
-    --encoder_only False  \
-    --doc_template "Title: <title> Text: <text>"  \
-    --doc_column_names id,title,text \
-    --q_max_len $max_q_len  \
-    --p_max_len $p_len  \
-    --fp16  \
-    --dataloader_num_workers 0
+export RANDOM=42
+echo "random down_sample train queries ... "
+shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
 echo "retrieving train ..."
 python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/train.query.txt  \
+    --query_path $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
     --q_max_len $max_q_len  \
     --fp16  \
-    --trec_save_path $RESULT_DIR/zeshel/train.trec \
+    --trec_save_path $RESULT_DIR/msmarco/train.trec \
     --dataloader_num_workers 0 \
     --topk 100
 
-echo "building hard negatives of ance first episode for zeshel ..."
+echo "building hard negatives of ance first episode for msmarco ..."
 mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
 python src/taco/dataset/build_hn.py  \
     --tokenizer_name $PLM_DIR/t5-base-scaled  \
-    --hn_file $RESULT_DIR/zeshel/train.trec \
+    --hn_file $RESULT_DIR/msmarco/train.trec \
     --qrels $RAW_DIR/train.qrel.tsv \
-    --queries $RAW_DIR/train.query.txt \
-    --collection $RAW_DIR/psg_corpus_train.tsv \
+    --queries $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt \
+    --collection $RAW_DIR/psg_corpus.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
     --num_hards 64 \
@@ -218,18 +157,20 @@ python src/taco/dataset/build_hn.py  \
     --use_doc_id_map \
     --truncate $p_len
 
-echo "removing train zeshel trec files"
-rm $RESULT_DIR/zeshel/train.trec
+echo "removing train msmarco trec files"
+rm $RESULT_DIR/msmarco/train.trec
 
-echo "splitting zeshel train hn file"
+echo "splitting msmarco train hn file"
 
-mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl  $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
+tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
+head -n -500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
+rm $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl
 
 echo "remove checkpoints"
 rm $MODEL_DIR/checkpoint-*
-echo "moving warmed up model to ance iter 0 model folder for zeshel"
+echo "moving warmed up model to ance iter 0 model folder for msmarco"
 mv $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
-echo "deleting warmed up embeddings for zeshel"
+echo "deleting warmed up embeddings for msmarco"
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*
 
 
