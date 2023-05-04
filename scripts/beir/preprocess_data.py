@@ -4,6 +4,8 @@ import pandas as pd
 import argparse
 import os
 import re
+import json
+from datasets import load_dataset
 
 
 def process_qrel(input_dir, processed_dir, data_name, split):
@@ -57,23 +59,27 @@ def process_corpus(input_dir, processed_dir):
                                      f'{dataset_name}/corpus.jsonl')
     output_corpus_path = os.path.join(processed_dir,
                                       f'{dataset_name}/corpus.tsv')
-    with open(input_corpus_path, 'r',
-              encoding='utf-8') as fin:
+    with open(input_corpus_path, 'r') as fin:
         with open(output_corpus_path, 'w',
                   newline='') as fout:
             tsv_w = csv.writer(fout, delimiter='\t')
-            for item in jsonlines.Reader(fin):
+            for line in fin:
+                item = json.loads(line)
                 _id = item['_id']
                 title = item['title']
                 if dataset_name == 'robust04':
                     text = re.sub(r"[^A-Za-z0-9=(),!?\'\`]", " ", item['text'])
                     text = " ".join(text.split())
                 else:
-                    text = item['text']
-                if _id is not None and _id != "":
-                    tsv_w.writerow([_id, title, text])
+                    text = item['text'].replace("\n", " ")
+                tsv_w.writerow([_id, title, text])
                 doc_count += 1
     print(f'doc count {doc_count}')
+
+
+# TODO: filter nan lines
+def check_corpus():
+    pass
 
 
 if __name__ == '__main__':

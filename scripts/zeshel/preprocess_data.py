@@ -111,12 +111,12 @@ def main(args):
     print("load original data ... ")
     samples_train, samples_val, samples_test, \
     train_doc, val_doc, test_doc = load_data(args.input_dir)
-    # print('process train corpus ... ')
-    # process_corpus(train_doc, args.output_dir, 'train')
-    # print('process dev corpus ... ')
-    # process_corpus(val_doc, args.output_dir, 'dev')
-    # print('process test corpus ... ')
-    # process_corpus(test_doc, args.output_dir, 'test')
+    print('process train corpus ... ')
+    process_corpus(train_doc, args.output_dir, 'train')
+    print('process dev corpus ... ')
+    process_corpus(val_doc, args.output_dir, 'dev')
+    print('process test corpus ... ')
+    process_corpus(test_doc, args.output_dir, 'test')
     print('process train query and qrel ... ')
     process_query(samples_train, train_doc, args.output_dir, 'train',
                   args.max_len)
