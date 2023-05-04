@@ -1,5 +1,6 @@
 #!/bin/bash
 HOME_DIR="/common/users/wz283/projects/"
+CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
@@ -8,7 +9,7 @@ DATA_DIR=$TACO_DIR"/data/msmarco/"
 RAW_DIR=$DATA_DIR"/raw/"
 PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 LOG_DIR=$TACO_DIR"/logs/msmarco/warmup_nce_dr/"
-EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_dr/"
+EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_nce_dr/"
 RESULT_DIR=$TACO_DIR"/results/warmup_nce_dr/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 ANCE_PROCESSED_DIR=$DATA_DIR"/processed/hard_nce_dr/"
@@ -40,7 +41,6 @@ n_passages=64
 infer_bsz=1024
 n_gpu=8
 max_q_len=128
-rands_ratio=0.5
 
 cd $CODE_DIR
 export PYTHONPATH=.
@@ -64,7 +64,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --q_max_len $max_q_len  \
     --p_max_len $p_len \
     --num_train_epochs $epoch  \
-    --logging_dir $LOG_DIR/msmarco  \
+    --logging_dir $LOG_DIR  \
     --negatives_x_device False \
     --remove_unused_columns False \
     --overwrite_output_dir True \
@@ -79,7 +79,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --save_total_limit 2 \
     --load_best_model_at_end True \
     --metric_for_best_model loss \
-    --rands_ratio $rands_ratio \
+    --data_cache_dir $CACHE_DIR
 
 
 
@@ -89,7 +89,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_i
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
+    --corpus_path $RAW_DIR/psg_corpus.tsv  \
     --encoder_only False  \
     --doc_template "Title: <title> Text: <text>"  \
     --doc_column_names id,title,text \
@@ -117,82 +117,20 @@ python -m src.taco.driver.retrieve  \
     --dataloader_num_workers 0
 
 $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/msmarco/dev.trec > $RESULT_DIR/msmarco/dev_results.txt
-echo "building val hard negatives of ance first episode for msmarco ..."
-mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
-python src/taco/dataset/build_hn.py  \
-    --tokenizer_name $PLM_DIR/t5-base-scaled  \
-    --hn_file $RESULT_DIR/msmarco/dev.trec \
-    --qrels $RAW_DIR/dev.qrel.tsv \
-    --queries $RAW_DIR/dev.query.txt \
-    --collection $RAW_DIR/psg_corpus_dev.tsv \
-    --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
-    --template "Title: <title> Text: <text>" \
-    --add_rand_negs \
-    --num_hards 64 \
-    --num_rands 64 \
-    --split dev \
-    --seed 42 \
-    --use_doc_id_map \
-    --truncate 128
-
-echo "splitting msmarco dev hn file"
-tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
-#rm $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl
-
-
-echo "building test index for msmarco"
-#  python src/taco/driver/build_index.py  \
-torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_test.tsv  \
-    --encoder_only False  \
-    --doc_template "Title: <title> Text: <text>"  \
-    --doc_column_names id,title,text \
-    --q_max_len $max_q_len  \
-    --p_max_len $p_len  \
-    --fp16  \
-    --dataloader_num_workers 0
-
-echo "retrieve test data of msmarco ... "
-
-python -m src.taco.driver.retrieve  \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/test.query.txt  \
-    --encoder_only False  \
-    --query_template "<text>"  \
-    --query_column_names  id,text \
-    --q_max_len $max_q_len  \
-    --fp16  \
-    --trec_save_path $RESULT_DIR/msmarco/test.trec \
-    --dataloader_num_workers 0
-
-$EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/msmarco/test.trec > $RESULT_DIR/msmarco/test_results.txt
 
 echo "get preprocessed data of msmarco for ance training"
-echo "building train index for msmarco"
 #  python src/taco/driver/build_index.py  \
-torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --corpus_path $RAW_DIR/psg_corpus_train.tsv  \
-    --encoder_only False  \
-    --doc_template "Title: <title> Text: <text>"  \
-    --doc_column_names id,title,text \
-    --q_max_len $max_q_len  \
-    --p_max_len $p_len  \
-    --fp16  \
-    --dataloader_num_workers 0
+
+
+export RANDOM=42
+echo "random down_sample train queries ... "
+shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
 echo "retrieving train ..."
 python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/train.query.txt  \
+    --query_path $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
@@ -208,25 +146,25 @@ python src/taco/dataset/build_hn.py  \
     --tokenizer_name $PLM_DIR/t5-base-scaled  \
     --hn_file $RESULT_DIR/msmarco/train.trec \
     --qrels $RAW_DIR/train.qrel.tsv \
-    --queries $RAW_DIR/train.query.txt \
-    --collection $RAW_DIR/psg_corpus_train.tsv \
+    --queries $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt \
+    --collection $RAW_DIR/psg_corpus.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
-    --add_rand_negs \
     --num_hards 64 \
     --num_rands 64 \
     --split train \
     --seed 42 \
-    --use_doc_id_map \
-    --truncate 128
+    --add_rand_negs \
+    --truncate $p_len
 
 echo "removing train msmarco trec files"
 rm $RESULT_DIR/msmarco/train.trec
 
 echo "splitting msmarco train hn file"
 
-mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
-
+tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
+head -n -500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
+rm $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl
 
 echo "remove checkpoints"
 rm $MODEL_DIR/checkpoint-*

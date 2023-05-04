@@ -37,7 +37,7 @@ lr=1e-5
 p_len=160
 log_step=100
 bsz=16
-n_passages=3
+n_passages=4
 infer_bsz=1024
 n_gpu=8
 max_q_len=128
@@ -154,7 +154,6 @@ python src/taco/dataset/build_hn.py  \
     --num_rands 64 \
     --split train \
     --seed 42 \
-    --use_doc_id_map \
     --truncate $p_len
 
 echo "removing train msmarco trec files"

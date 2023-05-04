@@ -79,7 +79,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --save_total_limit 2 \
     --load_best_model_at_end True \
     --metric_for_best_model loss \
-    --rands_ratio $rands_ratio \
+    --rands_ratio $rands_ratio
 
 
 
