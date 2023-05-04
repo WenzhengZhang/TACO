@@ -6,6 +6,7 @@ import os
 import re
 import json
 from datasets import load_dataset
+from taco.utils import get_idx
 
 
 def process_qrel(input_dir, processed_dir, data_name, split):
@@ -52,13 +53,13 @@ def process_query(input_dir, processed_dir, data_name, q_ids, split):
     print(f'queries count for {data_name}_{split} : {que_count}')
 
 
-def process_corpus(input_dir, processed_dir):
+def process_corpus(input_dir, processed_dir, data_name):
     # Corpus
     doc_count = 0
     input_corpus_path = os.path.join(input_dir,
-                                     f'{dataset_name}/corpus.jsonl')
+                                     f'{data_name}/corpus.jsonl')
     output_corpus_path = os.path.join(processed_dir,
-                                      f'{dataset_name}/corpus.tsv')
+                                      f'{data_name}/corpus.tsv')
     with open(input_corpus_path, 'r') as fin:
         with open(output_corpus_path, 'w',
                   newline='') as fout:
@@ -78,8 +79,21 @@ def process_corpus(input_dir, processed_dir):
 
 
 # TODO: filter nan lines
-def check_corpus():
-    pass
+def check_corpus(processed_dir, data_name, cache_dir):
+    corpus_path = os.path.join(processed_dir, f'{data_name}/corpus.tsv')
+    corpus_set = load_dataset(
+        "csv",
+        data_files=corpus_path,
+        streaming=False,
+        column_names=["id", "title", "text"],
+        delimiter='\t',
+        cache_dir=cache_dir
+    )["train"]
+    for example in corpus_set:
+        try:
+            example_id = get_idx(example)
+        except ValueError:
+            print(example)
 
 
 if __name__ == '__main__':
@@ -88,12 +102,14 @@ if __name__ == '__main__':
                         help='dataset name from BEIR')
     parser.add_argument('--input_dir', type=str, help='input directory')
     parser.add_argument('--processed_dir', type=str, help='processed directory')
+    parser.add_argument('--cache_dir', type=str)
     parser.add_argument('--process_train', action='store_true')
     parser.add_argument('--process_dev', action='store_true')
+    parser.add_argument('--verify_corpus', action='store_true')
     args = parser.parse_args()
     dataset_name = args.dataset_name
     print('process corpus ... ')
-    process_corpus(args.input_dir, args.processed_dir)
+    process_corpus(args.input_dir, args.processed_dir, dataset_name)
     print('process qrels test')
     test_qids = process_qrel(args.input_dir, args.processed_dir, dataset_name,
                              'test')
@@ -114,3 +130,5 @@ if __name__ == '__main__':
         print('process queries dev ... ')
         process_query(args.input_dir, args.processed_dir, dataset_name,
                       dev_qids, 'dev')
+    if args.verify_corpus:
+        check_corpus(args.processed_dir, dataset_name, args.cache_dir)
