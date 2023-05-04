@@ -45,7 +45,7 @@ infer_bsz=256
 steps=250
 n_gpu=8
 
-for hn_iter in {1..$num_hn_iters}
+for hn_iter in {1..${num_hn_iters}}
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
