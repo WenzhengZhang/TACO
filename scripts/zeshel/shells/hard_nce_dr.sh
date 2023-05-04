@@ -41,7 +41,7 @@ lr=1e-5
 dr=1
 n_gpu=8
 bsz=2
-infer_bsz=1024
+infer_bsz=256
 steps=250
 n_gpu=8
 
@@ -49,106 +49,108 @@ for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iters++))
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
-    if [ $hn_iter == 0 ]; then
-      echo "build dev index and retrieve for the first episode"
-      echo "build index ... "
+    if [ $hn_iter != 0 ]; then
+      if [ $hn_iter == 0 ]; then
+        echo "build dev index and retrieve for the first episode"
+        echo "build index ... "
+        python src/taco/driver/build_index.py \
+          --output_dir $EMBEDDING_DIR/ \
+          --model_name_or_path $MODEL_DIR \
+          --per_device_eval_batch_size $infer_bsz  \
+          --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
+          --encoder_only False  \
+          --doc_template "Title: <title> Text: <text>"  \
+          --doc_column_names id,title,text \
+          --q_max_len $max_q_len  \
+          --p_max_len $p_len  \
+          --fp16  \
+          --dataloader_num_workers 0
+        echo "retrieve ... "
+        python -m src.taco.driver.retrieve  \
+          --output_dir $EMBEDDING_DIR/ \
+          --model_name_or_path $MODEL_DIR \
+          --per_device_eval_batch_size $infer_bsz  \
+          --query_path $RAW_DIR/dev.query.txt  \
+          --encoder_only False  \
+          --query_template "<text>"  \
+          --query_column_names  id,text \
+          --q_max_len $max_q_len  \
+          --fp16  \
+          --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
+          --dataloader_num_workers 0
+      fi
+      echo "building val hard negatives for zeshel ..."
+      mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
+      python src/taco/dataset/build_hn.py  \
+          --tokenizer_name $PLM_DIR/t5-base-scaled  \
+          --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
+          --qrels $RAW_DIR/dev.qrel.tsv \
+          --queries $RAW_DIR/dev.query.txt \
+          --collection $RAW_DIR/psg_corpus_dev.tsv \
+          --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
+          --template "Title: <title> Text: <text>" \
+          --add_rand_negs \
+          --num_hards 64 \
+          --num_rands 64 \
+          --split dev \
+          --seed ${hn_iter} \
+          --use_doc_id_map \
+          --truncate $p_len
+      echo "splitting zeshel dev hn file"
+      tail -n 500 $PROCESSED_DIR/hn_iter_${hn_iter}/dev_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/val.jsonl
+      echo "building train index for zeshel"
+      #  python src/taco/driver/build_index.py  \
       torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-        --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR \
-        --per_device_eval_batch_size $infer_bsz  \
-        --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
-        --encoder_only False  \
-        --doc_template "Title: <title> Text: <text>"  \
-        --doc_column_names id,title,text \
-        --q_max_len $max_q_len  \
-        --p_max_len $p_len  \
-        --fp16  \
-        --dataloader_num_workers 0
-      echo "retrieve ... "
+          --output_dir $EMBEDDING_DIR/ \
+          --model_name_or_path $MODEL_DIR \
+          --per_device_eval_batch_size $infer_bsz  \
+          --corpus_path $RAW_DIR/psg_corpus_train.tsv  \
+          --encoder_only False  \
+          --doc_template "Title: <title> Text: <text>"  \
+          --doc_column_names id,title,text \
+          --q_max_len $max_q_len  \
+          --p_max_len $p_len  \
+          --fp16  \
+          --dataloader_num_workers 0
+      echo "retrieving train ..."
+      mkdir -p $RESULT_DIR/zeshel/hn_iter_${hn_iter}
       python -m src.taco.driver.retrieve  \
-        --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR \
-        --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/dev.query.txt  \
-        --encoder_only False  \
-        --query_template "<text>"  \
-        --query_column_names  id,text \
-        --q_max_len $max_q_len  \
-        --fp16  \
-        --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
-        --dataloader_num_workers 0
+          --output_dir $EMBEDDING_DIR/ \
+          --model_name_or_path $MODEL_DIR \
+          --per_device_eval_batch_size $infer_bsz  \
+          --query_path $RAW_DIR/train.query.txt  \
+          --encoder_only False  \
+          --query_template "<text>"  \
+          --query_column_names  id,text \
+          --q_max_len $max_q_len  \
+          --fp16  \
+          --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
+          --dataloader_num_workers 0 \
+          --topk 100
+      echo "building hard negatives for zeshel ..."
+      mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
+      python src/taco/dataset/build_hn.py  \
+          --tokenizer_name $PLM_DIR/t5-base-scaled  \
+          --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
+          --qrels $RAW_DIR/train.qrel.tsv \
+          --queries $RAW_DIR/train.query.txt \
+          --collection $RAW_DIR/psg_corpus_train.tsv \
+          --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
+          --template "Title: <title> Text: <text>" \
+          --add_rand_negs \
+          --num_hards 64 \
+          --num_rands 64 \
+          --split train \
+          --seed ${hn_iter} \
+          --use_doc_id_map \
+          --truncate $p_len
+
+      echo "removing training trec file of zeshel"
+      rm $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec
+
+      echo "splitting zeshel train hn file"
+      mv $PROCESSED_DIR/hn_iter_${hn_iter}/train_all.jsonl  $PROCESSED_DIR/hn_iter_${hn_iter}/train.jsonl
     fi
-    echo "building val hard negatives for zeshel ..."
-    mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
-    python src/taco/dataset/build_hn.py  \
-        --tokenizer_name $PLM_DIR/t5-base-scaled  \
-        --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
-        --qrels $RAW_DIR/dev.qrel.tsv \
-        --queries $RAW_DIR/dev.query.txt \
-        --collection $RAW_DIR/psg_corpus_dev.tsv \
-        --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
-        --template "Title: <title> Text: <text>" \
-        --add_rand_negs \
-        --num_hards 64 \
-        --num_rands 64 \
-        --split dev \
-        --seed ${hn_iter} \
-        --use_doc_id_map \
-        --truncate $p_len
-    echo "splitting zeshel dev hn file"
-    tail -n 500 $PROCESSED_DIR/hn_iter_${hn_iter}/dev_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/val.jsonl
-    echo "building train index for zeshel"
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-        --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR \
-        --per_device_eval_batch_size $infer_bsz  \
-        --corpus_path $RAW_DIR/psg_corpus_train.tsv  \
-        --encoder_only False  \
-        --doc_template "Title: <title> Text: <text>"  \
-        --doc_column_names id,title,text \
-        --q_max_len $max_q_len  \
-        --p_max_len $p_len  \
-        --fp16  \
-        --dataloader_num_workers 0
-    echo "retrieving train ..."
-    mkdir -p $RESULT_DIR/zeshel/hn_iter_${hn_iter}
-    python -m src.taco.driver.retrieve  \
-        --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR \
-        --per_device_eval_batch_size $infer_bsz  \
-        --query_path $RAW_DIR/train.query.txt  \
-        --encoder_only False  \
-        --query_template "<text>"  \
-        --query_column_names  id,text \
-        --q_max_len $max_q_len  \
-        --fp16  \
-        --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
-        --dataloader_num_workers 0 \
-        --topk 100
-    echo "building hard negatives for zeshel ..."
-    mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
-    python src/taco/dataset/build_hn.py  \
-        --tokenizer_name $PLM_DIR/t5-base-scaled  \
-        --hn_file $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec \
-        --qrels $RAW_DIR/train.qrel.tsv \
-        --queries $RAW_DIR/train.query.txt \
-        --collection $RAW_DIR/psg_corpus_train.tsv \
-        --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
-        --template "Title: <title> Text: <text>" \
-        --add_rand_negs \
-        --num_hards 64 \
-        --num_rands 64 \
-        --split train \
-        --seed ${hn_iter} \
-        --use_doc_id_map \
-        --truncate $p_len
-
-    echo "removing training trec file of zeshel"
-    rm $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec
-
-    echo "splitting zeshel train hn file"
-    mv $PROCESSED_DIR/hn_iter_0/train_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/train.jsonl
 
 
     echo "start hn training for zeshel for episode-${hn_iter} ..."
