@@ -70,6 +70,7 @@ do
         --fp16  \
         --dataloader_num_workers 0
       echo "retrieve ... "
+      mkdir -p $RESULT_DIR/zeshel/hn_iter_${hn_iter}
       python -m src.taco.driver.retrieve  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter} \
