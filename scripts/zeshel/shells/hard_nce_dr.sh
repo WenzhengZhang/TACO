@@ -40,7 +40,7 @@ epoch_per_hn=1
 lr=1e-5
 dr=1
 n_gpu=8
-bsz=2
+bsz=4
 infer_bsz=256
 steps=250
 n_gpu=8
@@ -99,8 +99,8 @@ do
       echo "splitting zeshel dev hn file"
       tail -n 500 $PROCESSED_DIR/hn_iter_${hn_iter}/dev_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/val.jsonl
       echo "building train index for zeshel"
-      #  python src/taco/driver/build_index.py  \
-      torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+#      torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+      python src/taco/driver/build_index.py  \
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR \
           --per_device_eval_batch_size $infer_bsz  \
@@ -198,8 +198,8 @@ do
 
     echo "evaluating zeshel dev for episode-${hn_iter} ..."
     echo "building index for zeshel dev for episode-${hn_iter} "
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+#    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+      python src/taco/driver/build_index.py  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
@@ -234,8 +234,8 @@ do
 
     echo "evaluating zeshel test for episode-${hn_iter} ..."
     echo "building index for zeshel test for episode-${hn_iter} "
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+#    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+      python src/taco/driver/build_index.py  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
