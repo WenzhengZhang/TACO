@@ -37,8 +37,9 @@ def main():
         )
 
     # Lr decay while iterative training with hard negative
-    for iter in range(model_args.iter_num):
-        training_args.learning_rate *= model_args.decay_rate
+    if not training_args.hard_negative_mining:
+        for iter in range(model_args.iter_num):
+            training_args.learning_rate *= model_args.decay_rate
 
     # Setup logging
     logging.basicConfig(

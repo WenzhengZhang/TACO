@@ -1,5 +1,6 @@
 #!/bin/bash
 HOME_DIR="/common/users/wz283/projects/"
+CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
@@ -41,18 +42,19 @@ lr=1e-5
 dr=1
 n_gpu=8
 bsz=16
-infer_bsz=1024
+infer_bsz=256
 steps=250
 n_gpu=8
 
-for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iters++))
+for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
     if [ $hn_iter == 0 ]; then
       echo "build dev index and retrieve for the first episode"
       echo "build index ... "
-      torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+      rm $EMBEDDING_DIR/embeddings.*
+      python src/taco/driver/build_index.py \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
@@ -76,8 +78,7 @@ do
         --q_max_len $max_q_len  \
         --fp16  \
         --trec_save_path $RESULT_DIR/zeshel/hn_iter_${hn_iter}/dev.trec \
-        --dataloader_num_workers 0 \
-        --topk 100
+        --dataloader_num_workers 0
     fi
     echo "building val hard negatives for zeshel ..."
     mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}
@@ -98,8 +99,9 @@ do
     echo "splitting zeshel dev hn file"
     tail -n 500 $PROCESSED_DIR/hn_iter_${hn_iter}/dev_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/val.jsonl
     echo "building train index for zeshel"
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+    rm $EMBEDDING_DIR/embeddings.*
+#      torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+    python src/taco/driver/build_index.py  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
@@ -147,7 +149,7 @@ do
     rm $RESULT_DIR/zeshel/hn_iter_${hn_iter}/train.trec
 
     echo "splitting zeshel train hn file"
-    mv $PROCESSED_DIR/hn_iter_0/train_all.jsonl > $PROCESSED_DIR/hn_iter_${hn_iter}/train.jsonl
+    mv $PROCESSED_DIR/hn_iter_${hn_iter}/train_all.jsonl  $PROCESSED_DIR/hn_iter_${hn_iter}/train.jsonl
 
 
     echo "start hn training for zeshel for episode-${hn_iter} ..."
@@ -191,23 +193,24 @@ do
         --metric_for_best_model loss \
         --hard_negative_mining True \
         --rands_ratio $rands_ratio \
-        --resume_from_checkpoint $resume
+        --resume_from_checkpoint $resume \
+        --data_cache_dir $CACHE_DIR
 
     echo "evaluating zeshel dev for episode-${hn_iter} ..."
     echo "building index for zeshel dev for episode-${hn_iter} "
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
-        --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $MODEL_DIR \
-        --per_device_eval_batch_size $infer_bsz  \
-        --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
-        --encoder_only False  \
-        --doc_template "Title: <title> Text: <text>"  \
-        --doc_column_names id,title,text \
-        --q_max_len $max_q_len  \
-        --p_max_len $p_len  \
-        --fp16  \
-        --dataloader_num_workers 0
+#    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+    python src/taco/driver/build_index.py  \
+      --output_dir $EMBEDDING_DIR/ \
+      --model_name_or_path $MODEL_DIR \
+      --per_device_eval_batch_size $infer_bsz  \
+      --corpus_path $RAW_DIR/psg_corpus_dev.tsv  \
+      --encoder_only False  \
+      --doc_template "Title: <title> Text: <text>"  \
+      --doc_column_names id,title,text \
+      --q_max_len $max_q_len  \
+      --p_max_len $p_len  \
+      --fp16  \
+      --dataloader_num_workers 0
 
     echo "retrieve dev data of zeshel for episode-${hn_iter} ... "
     if [ ! -d "$RESULT_DIR/zeshel/hn_iter_${new_hn_iter}" ]; then
@@ -231,8 +234,9 @@ do
 
     echo "evaluating zeshel test for episode-${hn_iter} ..."
     echo "building index for zeshel test for episode-${hn_iter} "
-    #  python src/taco/driver/build_index.py  \
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+    rm $EMBEDDING_DIR/embeddings.*
+#    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+    python src/taco/driver/build_index.py  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
