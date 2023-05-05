@@ -7,7 +7,7 @@ CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
 DATA_DIR=$TACO_DIR"/data/beir/"
-RAW_DIR=$DATA_DIR"/raw/"
+#RAW_DIR=$DATA_DIR"/raw/"
 PROCESSED_DIR=$DATA_DIR"/processed/"
 LOG_DIR=$TACO_DIR"/logs/beir/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/"
@@ -19,8 +19,8 @@ mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
 mkdir -p $DATA_DIR
-mkdir -p $RAW_DIR
-mkdir -p $PROCESSED_DIR
+#mkdir -p $RAW_DIR
+#mkdir -p $PROCESSED_DIR
 mkdir -p $LOG_DIR
 mkdir -p $EMBEDDING_DIR
 mkdir -p $RESULT_DIR
@@ -79,7 +79,7 @@ do
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
-      --corpus_path $RAW_DIR/${beir_set}/psg_corpus.tsv  \
+      --corpus_path $DATA_DIR/${beir_set}/raw/psg_corpus.tsv  \
       --encoder_only False  \
       --doc_template "Title: <title> Text: <text>"  \
       --doc_column_names id,title,text \
@@ -98,7 +98,7 @@ do
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
-      --query_path $RAW_DIR/${beir_set}/test.query.txt  \
+      --query_path $DATA_DIR/${beir_set}/raw/test.query.txt  \
       --encoder_only False  \
       --query_template "<text>"  \
       --query_column_names  id,text \
@@ -110,7 +110,7 @@ do
       --add_query_task_prefix True \
       --cache_dir $CACHE_DIR
 
-  $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 -mrecall.100 $RAW_DIR/${beir_set}/test.qrel.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
+  $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mndcg_cut.10 -mrecall.100 $DATA_DIR/${beir_set}/raw/test.qrel.trec $RESULT_DIR/${beir_set}/test.trec > $RESULT_DIR/${beir_set}/test_results.txt
  
   echo "deleting warmed up embeddings for ${beir_set}"
   rm $EMBEDDING_DIR/embeddings.corpus.rank.*

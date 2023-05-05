@@ -38,5 +38,26 @@ else
         --truncate 128 \
         --use_doc_id_map \
         --seed 42 \
-        --hn_file $ORIG_DIR/tfidf_candidates/train.json
+        --hn_file $ORIG_DIR/tfidf_candidates/train.json \
+        --split train
+  echo "build val "
+  python $CODE_DIR/scripts/zeshel/build_train.py \
+        --tokenizer_name $PLM_DIR/t5-base-scaled  \
+        --qrels $RAW_DIR/dev.qrel.tsv  \
+        --queries $RAW_DIR/dev.query.txt  \
+        --collection $RAW_DIR/psg_corpus_dev.tsv  \
+        --save_to $PROCESSED_DIR/  \
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs \
+        --num_rands 64 \
+        --num_hards 64 \
+        --truncate 128 \
+        --use_doc_id_map \
+        --seed 42 \
+        --hn_file $ORIG_DIR/tfidf_candidates/val.json \
+        --split dev
+  echo "splitting zeshel dev file"
+  tail -n 500 $PROCESSED_DIR/dev_all.jsonl > $PROCESSED_DIR/val.jsonl
+  echo "splitting zeshel train file"
+  mv $PROCESSED_DIR/train_all.jsonl  $PROCESSED_DIR/train.jsonl
 fi

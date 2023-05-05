@@ -7,14 +7,14 @@ PLM_DIR=$TACO_DIR"/plm/"
 MODEL_DIR=$TACO_DIR"/model/beir"
 DATA_DIR=$TACO_DIR"/data/beir/"
 ORIG_DIR=$DATA_DIR"/original/"
-RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/"
+#RAW_DIR=$DATA_DIR"/raw/"
+#PROCESSED_DIR=$DATA_DIR"/processed/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
 mkdir -p $DATA_DIR
-mkdir -p $RAW_DIR
-mkdir -p $PROCESSED_DIR
+#mkdir -p $RAW_DIR
+#mkdir -p $PROCESSED_DIR
 mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
 cd $ORIG_DIR
@@ -24,11 +24,11 @@ has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
 has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
 for dataset in ${beir_sets[@]}
 do
-  if [ -d "$RAW_DIR/${dataset}" ]; then
-    echo "$RAW_DIR/${dataset} already exists.";
+  if [ -d "$DATA_DIR/${dataset}/raw/" ]; then
+    echo "$DATA_DIR/${dataset}/raw already exists.";
   else
     echo "downloading ${dataset}"
-    mkdir -p $RAW_DIR/$dataset
+    mkdir -p $DATA_DIR/${dataset}/raw/
   #  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
     python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
       --out_dir $ORIG_DIR
@@ -36,26 +36,26 @@ do
     if [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process both train,dev and test"
       python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-        --processed_dir $RAW_DIR \
+        --processed_dir $DATA_DIR/${dataset}/raw \
         --process_train \
         --process_dev \
         --dataset_name ${dataset}
     elif [[ " ${has_train_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process train and test"
       python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-        --processed_dir $RAW_DIR \
+        --processed_dir $DATA_DIR/${dataset}/raw \
         --process_train \
         --dataset_name ${dataset}
     elif [[ " ${has_dev_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process dev and test"
       python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-        --processed_dir $RAW_DIR \
+        --processed_dir $DATA_DIR/${dataset}/raw \
         --process_dev \
         --dataset_name ${dataset}
     else
       echo "process test"
       python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
-        --processed_dir $RAW_DIR \
+        --processed_dir $DATA_DIR/${dataset}/raw \
         --dataset_name ${dataset}
     fi
     echo "remove original beir data"

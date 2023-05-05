@@ -5,8 +5,8 @@ TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
 MODEL_DIR=$TACO_DIR"/model/kilt/ance_hn_dr/"
 DATA_DIR=$TACO_DIR"/data/kilt/"
-RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/ance_hn_dr/"
+#RAW_DIR=$DATA_DIR"/raw/"
+#PROCESSED_DIR=$DATA_DIR"/processed/ance_hn_dr/"
 LOG_DIR=$TACO_DIR"/logs/kilt/ance_hn_dr/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_hn_dr/"
 RESULT_DIR=$TACO_DIR"/results/ance_hn_dr/"
@@ -15,8 +15,8 @@ mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
 mkdir -p $DATA_DIR
-mkdir -p $RAW_DIR
-mkdir -p $PROCESSED_DIR
+#mkdir -p $RAW_DIR
+#mkdir -p $PROCESSED_DIR
 mkdir -p $LOG_DIR
 mkdir -p $EMBEDDING_DIR
 mkdir -p $RESULT_DIR
@@ -66,7 +66,7 @@ do
             --output_dir $EMBEDDING_DIR/ \
             --model_name_or_path $MODEL_DIR/${kilt_set} \
             --per_device_eval_batch_size $infer_bsz  \
-            --query_path $RAW_DIR/${kilt_set}/train.query.txt  \
+            --query_path $DATA_DIR/${kilt_set}/raw/train.query.txt  \
             --encoder_only False  \
             --query_template "<text>"  \
             --query_column_names  id,text \
@@ -76,14 +76,14 @@ do
             --dataloader_num_workers 0 \
             --topk 110
         echo "building hard negatives of ance first episode for ${kilt_set} ..."
-        mkdir -p $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}
+        mkdir -p $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}
         python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \
             --hn_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/train.trec \
-            --qrels $RAW_DIR/${kilt_set}/train.qrel.tsv \
-            --queries $RAW_DIR/${kilt_set}/train.query.txt \
-            --collection $RAW_DIR/corpus/psg_corpus.tsv \
-            --save_to $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter} \
+            --qrels $DATA_DIR/${kilt_set}/raw/train.qrel.tsv \
+            --queries $DATA_DIR/${kilt_set}/raw/train.query.txt \
+            --collection $DATA_DIR/corpus/psg_corpus.tsv \
+            --save_to $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter} \
             --template "Title: <title> Text: <text>" \
             --add_rand_negs True \
             --num_hards 64 \
@@ -92,9 +92,9 @@ do
         echo "removing training trec file of ${kilt_set}"
         rm $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/train.trec
         echo "splitting ${kilt_set} hn file"
-        tail -n 500 $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train_all.jsonl > $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/val.jsonl
-        head -n -500 $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train_all.jsonl > $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train.jsonl
-        rm $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train_all.jsonl
+        tail -n 500 $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/train_all.jsonl > $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/val.jsonl
+        head -n -500 $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/train_all.jsonl > $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/train.jsonl
+        rm $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/train_all.jsonl
       fi
 
 
@@ -112,8 +112,8 @@ do
           --save_strategy epoch \
           --evaluation_strategy epoch \
           --logging_steps $log_step \
-          --train_path $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/train.jsonl  \
-          --eval_path $PROCESSED_DIR/${kilt_set}/hn_iter_${hn_iter}/val.jsonl \
+          --train_path $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/train.jsonl  \
+          --eval_path $DATA_DIR/${kilt_set}/processed/ance_hn_dr/hn_iter_${hn_iter}/val.jsonl \
           --fp16  \
           --per_device_train_batch_size $bsz  \
           --train_n_passages $n_passages  \
@@ -150,7 +150,7 @@ do
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR/${kilt_set} \
           --per_device_eval_batch_size $infer_bsz  \
-          --corpus_path $RAW_DIR/corpus/psg_corpus.tsv  \
+          --corpus_path $DATA_DIR/corpus/psg_corpus.tsv  \
           --encoder_only False  \
           --doc_template "Title: <title> Text: <text>"  \
           --doc_column_names id,title,text \
@@ -168,7 +168,7 @@ do
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR/${kilt_set} \
           --per_device_eval_batch_size $infer_bsz  \
-          --query_path $RAW_DIR/${kilt_set}/dev.query.txt  \
+          --query_path $DATA_DIR/${kilt_set}/raw/dev.query.txt  \
           --encoder_only False  \
           --query_template "<text>"  \
           --query_column_names  id,text \
@@ -179,20 +179,20 @@ do
           --task_name ${kilt_set^^} \
           --add_query_task_prefix True
 
-      $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 $RAW_DIR/${kilt_set}/dev.qrel.trec $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev.trec > $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev_results.txt
+      $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 $DATA_DIR/${kilt_set}/raw/dev.qrel.trec $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev.trec > $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev_results.txt
       echo "page-level scoring ..."
       python scripts/kilt/convert_trec_to_provenance.py  \
         --trec_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/dev.trec  \
-        --kilt_queries_file $RAW_DIR/${kilt_set}/${kilt_set}-dev-kilt.jsonl  \
-        --passage_collection $RAW_DIR/corpus/psgs_w100.tsv  \
+        --kilt_queries_file $DATA_DIR/${kilt_set}/raw/${kilt_set}-dev-kilt.jsonl  \
+        --passage_collection $DATA_DIR/corpus/psgs_w100.tsv  \
         --output_provenance_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/provenance.json
       echo "get prediction file ... "
       python scripts/kilt/convert_to_evaluation.py \
-        --kilt_queries_file $RAW_DIR/${kilt_set}/${kilt_set}-dev-kilt.jsonl  \
+        --kilt_queries_file $DATA_DIR/${kilt_set}/raw/${kilt_set}-dev-kilt.jsonl  \
         --provenance_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/provenance.json \
         --output_evaluation_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/preds.json
       echo "get scores ... "
-      python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/preds.json $RAW_DIR/${kilt_set}/${kilt_set}-dev-kilt.jsonl \
+      python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/preds.json $DATA_DIR/${kilt_set}/raw/${kilt_set}-dev-kilt.jsonl \
         --ks 1,20,100 \
         --results_file $RESULT_DIR/${kilt_set}/hn_iter_${hn_iter}/page-level-results.json
   done

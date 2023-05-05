@@ -7,14 +7,14 @@ PLM_DIR=$TACO_DIR"/plm/"
 MODEL_DIR=$TACO_DIR"/model/beir"
 DATA_DIR=$TACO_DIR"/data/beir/"
 ORIG_DIR=$DATA_DIR"/original/"
-RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
+#RAW_DIR=$DATA_DIR"/raw/"
+#PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
 mkdir -p $DATA_DIR
-mkdir -p $RAW_DIR
-mkdir -p $PROCESSED_DIR
+#mkdir -p $RAW_DIR
+#mkdir -p $PROCESSED_DIR
 mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
 cd $CODE_DIR
@@ -22,8 +22,8 @@ cd $CODE_DIR
 #echo "get train bm25 candidates first ... "
 #python -m pyserini.search.lucene   \
 #  --index beir-v1.0.0-${DATA_NAME}-flat   \
-#  --topics $RAW_DIR/${DATA_NAME}/train.query.txt \
-#  --output $RAW_DIR/${DATA_NAME}/train.bm25.txt   \
+#  --topics $DATA_DIR/${DATA_NAME}/raw/train.query.txt \
+#  --output $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt   \
 #  --output-format trec   \
 #  --batch 36 --threads 12 \
 #  --hits 100 \
@@ -32,14 +32,14 @@ cd $CODE_DIR
 
 echo "build training data for warmup training ... "
 p_len=160
-mkdir -p $PROCESSED_DIR/${DATA_NAME}/
+mkdir -p $DATA_DIR/${DATA_NAME}/processed/bm25/
 python src/taco/dataset/build_hn.py  \
   --tokenizer_name $PLM_DIR/t5-base-scaled  \
-  --hn_file $RAW_DIR/${DATA_NAME}/train.bm25.txt \
-  --qrels $RAW_DIR/${DATA_NAME}/train.qrel.tsv \
-  --queries $RAW_DIR/${DATA_NAME}/train.query.txt \
-  --collection $RAW_DIR/${DATA_NAME}/psg_corpus.tsv \
-  --save_to $PROCESSED_DIR/${DATA_NAME}/ \
+  --hn_file $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt \
+  --qrels $DATA_DIR/${DATA_NAME}/raw/train.qrel.tsv \
+  --queries $DATA_DIR/${DATA_NAME}/raw/train.query.txt \
+  --collection $DATA_DIR/${DATA_NAME}/raw/psg_corpus.tsv \
+  --save_to $DATA_DIR/${DATA_NAME}/processed/bm25/ \
   --template "Title: <title> Text: <text>" \
   --add_rand_negs \
   --num_hards 48 \
@@ -48,3 +48,8 @@ python src/taco/dataset/build_hn.py  \
   --seed 42 \
   --truncate $p_len \
   --use_doc_id_map
+
+echo "split train into train and val"
+tail -n 500 $DATA_DIR/${DATA_NAME}/processed/bm25/train_all.jsonl > $DATA_DIR/${DATA_NAME}/processed/bm25/val.jsonl
+head -n -500 $DATA_DIR/${DATA_NAME}/processed/bm25/train_all.jsonl > $DATA_DIR/${DATA_NAME}/processed/bm25/train.jsonl
+rm $DATA_DIR/${DATA_NAME}/processed/bm25/train_all.jsonl
