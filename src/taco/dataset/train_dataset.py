@@ -206,9 +206,9 @@ class DRTrainDataset(TrainDatasetBase):
                 if hashed_seed is not None:
                     try:
                         hard_negatives = random.choices(group_negatives,
-                                                        k=num_hard)
+                                                    k=num_hard)
                     except IndexError:
-                        print(example)
+                        print(self.task_name)
                 else:
                     hard_negatives = [x for x in group_negatives]
                     hard_negatives = hard_negatives * 2
