@@ -17,7 +17,7 @@ mkdir -p $RAW_DIR
 mkdir -p $PROCESSED_DIR
 mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
-cd $ORIG_DIR
+cd $CODE_DIR
 
 #echo "get train bm25 candidates first ... "
 #python -m pyserini.search.lucene   \
