@@ -167,8 +167,8 @@ rm $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl
 
 echo "remove checkpoints"
 rm $MODEL_DIR/checkpoint-*
-echo "moving warmed up model to ance iter 0 model folder for msmarco"
-mv $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
+echo "copy warmed up model to ance iter 0 model folder for msmarco"
+cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings for msmarco"
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*
 

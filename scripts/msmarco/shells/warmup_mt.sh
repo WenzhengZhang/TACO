@@ -4,22 +4,22 @@ CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/mt_msmarco/warmup_mt/"
+MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
 DATA_DIR=$TACO_DIR"/data/"
-RAW_DIR=$DATA_DIR"/raw/"
-PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
-LOG_DIR=$TACO_DIR"/logs/mt_msmarco/warmup_mt/"
-EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_mt/"
+#RAW_DIR=$DATA_DIR"/raw/"
+#PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
+LOG_DIR=$TACO_DIR"/logs/warmup_mt/mt_msmarco/"
+EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_mt/mt_msmarco/"
 RESULT_DIR=$TACO_DIR"/results/warmup_mt/mt_msmarco/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-ANCE_PROCESSED_DIR=$DATA_DIR"/processed/ance_mt/"
-ANCE_MODEL_DIR=$TACO_DIR"/model/mt_msmarco/ance_mt/"
+ANCE_PROCESSED_DIR=$DATA_DIR"ance_hn_mt/mt_msmarco/processed/naive/"
+ANCE_MODEL_DIR=$TACO_DIR"/model/ance_hn_mt/mt_msmarco/naive/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
 mkdir -p $DATA_DIR
-mkdir -p $RAW_DIR
-mkdir -p $PROCESSED_DIR
+#mkdir -p $RAW_DIR
+#mkdir -p $PROCESSED_DIR
 mkdir -p $LOG_DIR
 mkdir -p $EMBEDDING_DIR
 mkdir -p $RESULT_DIR
@@ -67,15 +67,17 @@ do
   max_p_len=160
   n_passage=8
   if [ ${mt_set} == nq ]; then
-    train_path="$delimiter"$DATA_DIR/kilt/processed/bm25/${mt_set}/train.jsonl
-    val_path="$delimiter"$DATA_DIR/kilt/processed/bm25/${mt_set}/val.jsonl
+    RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/bm25/
   elif [ ${mt_set} == fever ]; then
-    train_path="$delimiter"$DATA_DIR/beir/processed/bm25/${mt_set}/train.jsonl
-    val_path="$delimiter"$DATA_DIR/beir/processed/bm25/${mt_set}/val.jsonl
+    RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/bm25/
   else
-    train_path="$delimiter"$DATA_DIR/${mt_set}/processed/bm25/train.jsonl
-    val_path="$delimiter"$DATA_DIR/${mt_set}/processed/bm25/val.jsonl
+    RAW_DIR=$DATA_DIR/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/bm25/
   fi
+  train_path="$delimiter"$PROCESSED_DIR/train.jsonl
+  val_path="$delimiter"$PROCESSED_DIR/val.jsonl
   mt_train_paths+=${train_path}
   mt_eval_paths+=${val_path}
   max_q_lens+="$delimiter"$max_q_len
@@ -141,41 +143,31 @@ do
   else
     max_q_len=32
   fi
-  if [ ${mt_set} == zeshel ]; then
-    dev_corpus_path=$DATA_DIR/${mt_set}/raw/psg_corpus_dev.tsv
-    dev_query_path=$DATA_DIR/${mt_set}/raw/dev.query.txt
-    dev_qrel_path=$DATA_DIR/${mt_set}/raw/dev.qrel.trec
-
-    train_corpus_path=$DATA_DIR/${mt_set}/raw/psg_corpus_train.tsv
-    train_query_path=$DATA_DIR/${mt_set}/raw/train.query.txt
-    train_qrel_path=$DATA_DIR/${mt_set}/raw/train.qrel.trec
-  elif [ ${mt_set} == nq ]; then
-    dev_corpus_path=$DATA_DIR/kilt/raw/corpus/psg_corpus.tsv
-    dev_query_path=$DATA_DIR/kilt/raw/${mt_set}/dev.query.txt
-    dev_qrel_path=$DATA_DIR/kilt/raw/${mt_set}/dev.qrel.trec
-
-    train_corpus_path=$DATA_DIR/kilt/raw/corpus/psg_corpus.tsv
-    train_query_path=$DATA_DIR/kilt/raw/${mt_set}/train.query.txt
-    train_qrel_path=$DATA_DIR/kilt/raw/${mt_set}/train.qrel.trec
+  if [ ${mt_set} == nq ]; then
+    RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/bm25/
   elif [ ${mt_set} == fever ]; then
-    dev_corpus_path=$DATA_DIR/beir/raw/${mt_set}/psg_corpus.tsv
-    dev_query_path=$DATA_DIR/beir/raw/${mt_set}/dev.query.txt
-    dev_qrel_path=$DATA_DIR/beir/raw/${mt_set}/dev.qrel.trec
-
-    train_corpus_path=$DATA_DIR/beir/raw/${mt_set}/psg_corpus.tsv
-    train_query_path=$DATA_DIR/beir/raw/${mt_set}/train.query.txt
-    train_qrel_path=$DATA_DIR/beir/raw/${mt_set}/train.qrel.trec
+    RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/bm25/
   else
-    dev_corpus_path=$DATA_DIR/${mt_set}/raw/psg_corpus.tsv
-    dev_query_path=$DATA_DIR/${mt_set}/raw/dev.query.txt
-    dev_qrel_path=$DATA_DIR/${mt_set}/raw/dev.qrel.trec
-
-    train_corpus_path=$DATA_DIR/beir/raw/${mt_set}/psg_corpus.tsv
-    train_query_path=$DATA_DIR/beir/raw/${mt_set}/train.query.txt
-    train_qrel_path=$DATA_DIR/beir/raw/${mt_set}/train.qrel.trec
+    RAW_DIR=$DATA_DIR/${mt_set}/raw/
+    PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/bm25/
+  fi
+  if [ ${mt_set} == zeshel ]; then
+    dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
+    train_corpus_path=$RAW_DIR/psg_corpus_train.tsv
+    test_corpus_path=$RAW_DIR/psg_corpus_test.tsv
+  elif [ ${mt_set} == nq ]; then
+    dev_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+    train_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+    test_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+  else
+    dev_corpus_path=$RAW_DIR/psg_corpus.tsv
+    train_corpus_path=$RAW_DIR/psg_corpus.tsv
+    test_corpus_path=$RAW_DIR/psg_corpus.tsv
   fi
 
-  echo "building index "
+  echo "building dev index "
 #  python src/taco/driver/build_index.py  \
   python src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
@@ -199,7 +191,7 @@ do
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
-      --query_path $dev_query_path  \
+      --query_path $RAW_DIR/dev.query.txt  \
       --encoder_only False  \
       --query_template "<text>"  \
       --query_column_names  id,text \
@@ -208,25 +200,41 @@ do
       --trec_save_path $RESULT_DIR/${mt_set}/dev.trec \
       --dataloader_num_workers 0
 
-  $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 ${dev_qrel_path} $RESULT_DIR/${mt_set}/dev.trec > $RESULT_DIR/${mt_set}/dev_results.txt
+  $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/dev.trec > $RESULT_DIR/${mt_set}/dev_results.txt
   if [ ${mt_set} == nq ]; then
     echo "page-level scoring ..."
     python scripts/kilt/convert_trec_to_provenance.py  \
       --trec_file $RESULT_DIR/${mt_set}/dev.trec  \
-      --kilt_queries_file $DATA_DIR/kilt/raw/${mt_set}/${mt_set}-dev-kilt.jsonl  \
-      --passage_collection $DATA_DIR/kilt/raw/corpus/psgs_w100.tsv  \
+      --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
+      --passage_collection $DATA_DIR/kilt/corpus/psgs_w100.tsv  \
       --output_provenance_file $RESULT_DIR/${mt_set}/provenance.json
     echo "get prediction file ... "
     python scripts/kilt/convert_to_evaluation.py \
-      --kilt_queries_file $DATA_DIR/kilt/raw/${mt_set}/${mt_set}-dev-kilt.jsonl  \
+      --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
       --provenance_file $RESULT_DIR/${mt_set}/provenance.json \
       --output_evaluation_file $RESULT_DIR/${mt_set}/preds.json
     echo "get scores ... "
-    python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${mt_set}/preds.json $DATA_DIR/kilt/raw/${mt_set}/${mt_set}-dev-kilt.jsonl \
+    python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${mt_set}/preds.json $RAW_DIR/${mt_set}-dev-kilt.jsonl \
       --ks 1,20,100 \
       --results_file $RESULT_DIR/${mt_set}/page-level-results.json
   elif [ ${mt_set} == zeshel ]; then
     echo "build val hard negatives for zeshel"
+    mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
+    python src/taco/dataset/build_hn.py  \
+        --tokenizer_name $PLM_DIR/t5-base-scaled  \
+        --hn_file $RESULT_DIR/${mt_set}/dev.trec \
+        --qrels $RAW_DIR/dev.qrel.tsv \
+        --queries $RAW_DIR/dev.query.txt \
+        --collection $dev_corpus_path \
+        --save_to $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0 \
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs \
+        --num_hards 32 \
+        --num_rands 32 \
+        --split dev \
+        --seed 42 \
+        --use_doc_id_map \
+        --truncate $p_len
 
   fi
 
@@ -238,7 +246,7 @@ do
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR \
           --per_device_eval_batch_size $infer_bsz  \
-          --corpus_path $DATA_DIR/${mt_set}/raw/psg_corpus_test.tsv  \
+          --corpus_path ${test_corpus_path}  \
           --encoder_only False  \
           --doc_template "Title: <title> Text: <text>"  \
           --doc_column_names id,title,text \
@@ -248,18 +256,11 @@ do
           --dataloader_num_workers 0
     fi
     echo "retrieve test ... "
-    if [ ${mt_set} == zeshel ]; then
-      test_query_path=$DATA_DIR/${mt_set}/raw/test.query.txt
-      test_qrel_path=$DATA_DIR/${mt_set}/raw/test.qrel.trec
-    else
-      test_query_path=$DATA_DIR/beir/raw/${mt_set}/test.query.txt
-      test_qrel_path=$DATA_DIR/beir/raw/${mt_set}/test.qrel.trec
-    fi
     python -m src.taco.driver.retrieve  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
-        --query_path $test_query_path  \
+        --query_path $RAW_DIR/test.query.txt  \
         --encoder_only False  \
         --query_template "<text>"  \
         --query_column_names  id,text \
@@ -269,7 +270,7 @@ do
         --dataloader_num_workers 0
 
     echo "evaluate test trec ... "
-    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 ${test_qrel_path} $RESULT_DIR/${mt_set}/test.trec > $RESULT_DIR/${mt_set}/test_results.txt
+    $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/${mt_set}/test.trec > $RESULT_DIR/${mt_set}/test_results.txt
 
   fi
   echo "get preprocessed data of ${mt_set} for ance training"
@@ -289,6 +290,15 @@ do
       --dataloader_num_workers 0
   fi
   echo "retrieving train ..."
+  if [ ${mt_set} == msmarco ]; then
+    echo "random down_sample msmarco"
+    export RANDOM=42
+    echo "random down_sample train queries ... "
+    shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
+    train_query_path=$ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
+  else
+    train_query_path=$RAW_DIR/train.query.txt
+  fi
   python -m src.taco.driver.retrieve  \
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
@@ -301,18 +311,19 @@ do
       --fp16  \
       --trec_save_path $RESULT_DIR/${mt_set}/train.trec \
       --dataloader_num_workers 0 \
-      --topk 110
+      --topk 100
 
   echo "building hard negatives of ance first episode for ${mt_set} ..."
   mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
   python src/taco/dataset/build_hn.py  \
       --tokenizer_name $PLM_DIR/t5-base-scaled  \
       --hn_file $RESULT_DIR/${mt_set}/train.trec \
-      --qrels $train_qrel_path \
+      --qrels $RAW_DIR/train.qrel.tsv \
       --queries $train_query_path \
       --collection $train_corpus_path \
       --save_to $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0 \
       --template "Title: <title> Text: <text>" \
+      --add_rand_negs \
       --num_hards 32 \
       --num_rands 32 \
       --split train \
@@ -324,12 +335,18 @@ do
   rm $RESULT_DIR/${mt_set}/train.trec
 
   echo "splitting ${mt_set} hn file"
-  tail -n 500 $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/val.jsonl
-  head -n -500 $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train.jsonl
-  rm $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl
+  if [ ${mt_set} == zeshel ]; then
+    mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl  $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
+    echo "splitting zeshel dev hn file"
+    tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/dev_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
+  else
+    tail -n 500 $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/val.jsonl
+    head -n -500 $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train.jsonl
+    rm $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0/train_all.jsonl
+  fi
 done
 
-echo "moving warmed up model to ance iter 0 model folder"
-mv $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
+echo "copy warmed up model to ance iter 0 model folder"
+cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings ... "
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*

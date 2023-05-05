@@ -230,8 +230,8 @@ mv $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl  $ANCE_PROCESSED_DIR/hn_iter_0/
 
 echo "remove checkpoints"
 rm $MODEL_DIR/checkpoint-*
-echo "moving warmed up model to ance iter 0 model folder for zeshel"
-mv $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
+echo "copy warmed up model to ance iter 0 model folder for zeshel"
+cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings for zeshel"
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*
 
