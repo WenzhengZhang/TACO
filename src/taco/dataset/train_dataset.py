@@ -204,8 +204,11 @@ class DRTrainDataset(TrainDatasetBase):
                 rand_negatives = example['random_negatives'][:num_rand]
             if len(group_negatives) < num_hard:
                 if hashed_seed is not None:
-                    hard_negatives = random.choices(group_negatives,
-                                                    k=num_hard)
+                    try:
+                        hard_negatives = random.choices(group_negatives,
+                                                        k=num_hard)
+                    except IndexError:
+                        print(example)
                 else:
                     hard_negatives = [x for x in group_negatives]
                     hard_negatives = hard_negatives * 2
