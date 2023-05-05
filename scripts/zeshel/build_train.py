@@ -19,7 +19,10 @@ def load_ranking(rank_file, relevance, num_hards, depth, shuffle_negs):
                 negatives = [c for c in cs if c not in relevance[q]]
                 if shuffle_negs:
                     random.shuffle(negatives)
-                yield q, relevance[q], negatives[:num_hards]
+                if len(negatives)>0:
+                    yield q, relevance[q], negatives[:num_hards]
+                else:
+                    print(item)
             except StopIteration:
                 return
 
