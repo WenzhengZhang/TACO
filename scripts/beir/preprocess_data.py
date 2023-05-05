@@ -12,9 +12,9 @@ from taco.utils import get_idx
 def process_qrel(input_dir, processed_dir, data_name, split):
     qrel_path = os.path.join(input_dir, f"{data_name}/qrels/{split}.tsv")
     processed_qrel_path = os.path.join(processed_dir,
-                                       f"{data_name}/qrel.{split}.tsv")
-    qrel_trec_path = os.path.join(processed_dir, f"{data_name}/qrel."
-                                                 f"{split}.trec")
+                                       f"{data_name}/{split}.qrel.tsv")
+    qrel_trec_path = os.path.join(processed_dir, f"{data_name}/"
+                                                 f"{split}.qrel.trec")
     q_ids = []
     qrel_df = pd.read_csv(qrel_path, sep='\t')
     with open(processed_qrel_path, 'w', newline='') as fout:
@@ -40,7 +40,7 @@ def process_query(input_dir, processed_dir, data_name, q_ids, split):
     que_count = 0
     input_query_path = os.path.join(input_dir, f"{data_name}/queries.jsonl")
     processed_query_path = os.path.join(processed_dir,
-                                        f"{data_name}/queries.{split}.tsv")
+                                        f"{data_name}/{split}.query.txt")
     with open(input_query_path, 'r', encoding='utf-8') as fin:
         with open(processed_query_path, 'w', newline='') as fout:
             tsv_w = csv.writer(fout, delimiter='\t')
@@ -59,7 +59,7 @@ def process_corpus(input_dir, processed_dir, data_name):
     input_corpus_path = os.path.join(input_dir,
                                      f'{data_name}/corpus.jsonl')
     output_corpus_path = os.path.join(processed_dir,
-                                      f'{data_name}/corpus.tsv')
+                                      f'{data_name}/psg_corpus.tsv')
     with open(input_corpus_path, 'r') as fin:
         with open(output_corpus_path, 'w',
                   newline='') as fout:
@@ -80,7 +80,7 @@ def process_corpus(input_dir, processed_dir, data_name):
 
 # TODO: filter nan lines
 def check_corpus(processed_dir, data_name, cache_dir):
-    corpus_path = os.path.join(processed_dir, f'{data_name}/corpus.tsv')
+    corpus_path = os.path.join(processed_dir, f'{data_name}/psg_corpus.tsv')
     corpus_set = load_dataset(
         "csv",
         data_files=corpus_path,
