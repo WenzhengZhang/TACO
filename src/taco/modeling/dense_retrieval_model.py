@@ -276,6 +276,7 @@ class DenseModel(nn.Module):
             task_names = train_args.task_names.split(',')
         if resume_path is not None:
             model_name_or_path = resume_path
+            print(f'loading model from resume path {resume_path}')
         else:
             model_name_or_path = model_args.model_name_or_path
         if os.path.isdir(model_name_or_path):
