@@ -208,7 +208,7 @@ class DRTrainDataset(TrainDatasetBase):
                                                     k=num_hard)
                 else:
                     hard_negatives = [x for x in group_negatives]
-                    hard_negatives = hard_negatives * 2
+                    hard_negatives = hard_negatives * 8
                     hard_negatives = hard_negatives[:num_hard]
             elif self.n_passages == 1:
                 hard_negatives = []

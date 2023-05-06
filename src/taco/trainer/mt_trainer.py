@@ -707,8 +707,8 @@ class MTDenseTrainer(DenseTrainer):
 
         with torch.no_grad():
             with self.compute_loss_context_manager():
-                losses, outputs = self.compute_loss(model, inputs,
-                                                    return_outputs=True)
+                losses = self.compute_loss(model, inputs,
+                                           return_outputs=False)
             loss = sum(losses)
             loss = loss.mean().detach()
         return loss, None, None
