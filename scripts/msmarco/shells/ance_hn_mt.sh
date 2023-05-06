@@ -13,20 +13,20 @@ LOG_DIR=$TACO_DIR"/logs/ance_hn_mt/mt_msmarco/"$mt_method
 EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_hn_mt/mt_msmarco/"$mt_method
 RESULT_DIR=$TACO_DIR"/results/ance_hn_mt/mt_msmarco/"$mt_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-PROCESSED_DIR=$DATA_DIR"ance_hn_mt/mt_msmarco/processed/"$mt_method
+#PROCESSED_DIR=$DATA_DIR"ance_hn_mt/mt_msmarco/processed/"$mt_method
 if [ -d $MODEL_DIR ]; then
   echo "$MODEL_DIR is not empty"
 else
   echo "get initial model"
   cp -r $TACO_DIR/model/ance_hn_mt/mt_msmarco/naive/ $MODEL_DIR
 fi
-if [ -d $PROCESSED_DIR ]; then
-  echo "$PROCESSED_DIR is not empty"
-else
-  echo "get initial processed data"
-  mkdir -p $DATA_DIR"ance_hn_mt/mt_msmarco/processed/"
-  cp -r $DATA_DIR"ance_hn_mt/mt_msmarco/processed/naive/"  $PROCESSED_DIR
-fi
+#if [ -d $PROCESSED_DIR ]; then
+#  echo "$PROCESSED_DIR is not empty"
+#else
+#  echo "get initial processed data"
+#  mkdir -p $DATA_DIR"ance_hn_mt/mt_msmarco/processed/"
+#  cp -r $DATA_DIR"ance_hn_mt/mt_msmarco/processed/naive/"  $PROCESSED_DIR
+#fi
 
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
@@ -47,16 +47,18 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=8
+epoch=6
 lr=1e-5
 p_len=160
 log_step=100
-bsz=32
+bsz=30
 n_passages=8
 infer_bsz=256
 #mt_method="naive"
 rands_ratio=0.5
 n_gpu=8
+num_hn_iters=6
+epoch_per_hn=1
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
@@ -107,13 +109,29 @@ do
     n_passage=8
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${hn_iter}/
+      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/
+      PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${hn_iter}/
+      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/
+      PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${hn_iter}/
+      PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/
+      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
+    fi
+    if [ $hn_iter == 0 ]; then
+      echo "initial processed data should be obtained after warmup training"
+      mkdir -p $PREFIX_PROCESSED
+      if [ -d $PROCESSED_DIR ]; then
+        echo "initial processed data already exists"
+      else
+        echo "copy from naive processed data"
+        cp -r $NAIVE_INIT_DIR $PROCESSED_DIR
+      fi
     fi
     train_path="$delimiter"$PROCESSED_DIR/train.jsonl
     val_path="$delimiter"$PROCESSED_DIR/val.jsonl
@@ -136,7 +154,6 @@ do
             --collection $dev_corpus_path \
             --save_to $PROCESSED_DIR \
             --template "Title: <title> Text: <text>" \
-            --add_rand_negs \
             --num_hards 32 \
             --num_rands 32 \
             --split dev \
@@ -153,7 +170,6 @@ do
           --collection $train_corpus_path \
           --save_to $PROCESSED_DIR \
           --template "Title: <title> Text: <text>" \
-          --add_rand_negs \
           --num_hards 32 \
           --num_rands 32 \
           --split train \
@@ -196,6 +212,7 @@ do
       --p_max_lens $max_p_lens \
       --task_names $task_names \
       --num_train_epochs $epoch  \
+      --epochs_per_hn $epoch_per_hn \
       --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
       --negatives_x_device False \
       --remove_unused_columns False \
@@ -269,13 +286,13 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/${mt_method}/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     fi
     mkdir -p $PROCESSED_DIR
     echo "build dev index for hn_iter ${hn_iter} ... "

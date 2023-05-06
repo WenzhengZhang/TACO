@@ -343,7 +343,6 @@ class DenseModel(nn.Module):
                 if model_args.add_linear_head:
                     head_p = LinearHead.load(_psg_head_path)
             else:
-                print(f'test model name or path {model_name_or_path}')
                 lm_q = model_class.from_pretrained(
                     model_name_or_path,
                     **hf_kwargs)
