@@ -276,7 +276,6 @@ class DenseModel(nn.Module):
             task_names = train_args.task_names.split(',')
         if resume_path is not None:
             model_name_or_path = resume_path
-            print(f'loading model from resume path {resume_path}')
         else:
             model_name_or_path = model_args.model_name_or_path
         if os.path.isdir(model_name_or_path):
@@ -344,6 +343,7 @@ class DenseModel(nn.Module):
                 if model_args.add_linear_head:
                     head_p = LinearHead.load(_psg_head_path)
             else:
+                print(f'test model name or path {model_name_or_path}')
                 lm_q = model_class.from_pretrained(
                     model_name_or_path,
                     **hf_kwargs)
