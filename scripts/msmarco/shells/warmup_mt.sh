@@ -131,7 +131,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_m
     --add_query_task_prefix False \
     --log_gnorm False \
     --data_cache_dir $CACHE_DIR \
-    --resume_from_checkpoint $MODEL_DIR/checkpoint-28304
+    --resume_from_checkpoint $MODEL_DIR/checkpoint-39040
 
 
 for mt_set in ${mt_sets[@]}
@@ -347,6 +347,6 @@ do
 done
 
 echo "copy warmed up model to ance iter 0 model folder"
-cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
+cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0
 echo "deleting warmed up embeddings ... "
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*

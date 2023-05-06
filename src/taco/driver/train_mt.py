@@ -131,7 +131,9 @@ def main():
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         callbacks=[tb_callback],
-        data_args=data_args
+        data_args=data_args,
+        model_args=model_args,
+        model_config=config
     )
     for train_task_set in train_dataset:
         train_task_set.trainer = trainer

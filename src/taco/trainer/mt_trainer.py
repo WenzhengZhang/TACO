@@ -21,6 +21,7 @@ from tqdm import tqdm
 import torch.distributed as dist
 from torch.utils.data import DataLoader, Dataset
 from ..utils import get_task_hps
+from ..modeling import DenseModel
 from transformers.trainer import Trainer, TRAINER_STATE_NAME
 from transformers.trainer_pt_utils import IterableDatasetShard, \
     is_sagemaker_mp_enabled, nested_detach, reissue_pt_warnings
@@ -100,9 +101,12 @@ support features:
 
 class MTDenseTrainer(DenseTrainer):
 
-    def __init__(self, data_args=None, *args, **kwargs):
+    def __init__(self, data_args=None, model_args=None, model_config=None,
+                 *args, **kwargs):
         super(MTDenseTrainer, self).__init__(*args, **kwargs)
         self.data_args = data_args
+        self.model_args = model_args
+        self.model_config = model_config
         self.task_names = self.args.task_names.split(',')
         self.num_tasks = len(self.task_names)
         self.n_passages = get_task_hps(data_args.mt_train_n_passages,
@@ -1271,6 +1275,24 @@ class MTDenseTrainer(DenseTrainer):
             self.control = self.callback_handler.on_save(self.args, self.state,
                                                          self.control)
 
+    def _load_best_model(self):
+        logger.info(
+            f"Loading best model from {self.state.best_model_checkpoint} "
+            f"(score: {self.state.best_metric}).")
+        best_model_path = os.path.join(
+            self.state.best_model_checkpoint, "pytorch_model.bin")
+        # best_safe_model_path = os.path.join(
+        #     self.state.best_model_checkpoint, "model.safetensors")
+        self.model = DenseModel.build(
+            model_args=self.model_args,
+            data_args=self.data_args,
+            training_args=self.args,
+            config=self.model_config,
+            cache_dir=self.model_args.cache_dir,
+            resume_path=best_model_path
+        )
+
+    # TODO: modify this function to support resume instead of rely on train_mt
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         logger.info(f"Loading model from {resume_from_checkpoint}.")
 
