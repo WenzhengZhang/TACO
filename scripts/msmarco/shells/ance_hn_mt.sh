@@ -46,8 +46,8 @@ mt_sets=(msmarco nq zeshel fever)
 SAVE_STEP=10000
 EVAL_STEP=300
 
-eval_delay=30
-epoch=40
+eval_delay=0
+epoch=8
 lr=1e-5
 p_len=160
 log_step=100

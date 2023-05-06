@@ -1286,7 +1286,7 @@ class MTDenseTrainer(DenseTrainer):
         self.model = DenseModel.build(
             model_args=self.model_args,
             data_args=self.data_args,
-            training_args=self.args,
+            train_args=self.args,
             config=self.model_config,
             cache_dir=self.model_args.cache_dir,
             resume_path=best_model_path
