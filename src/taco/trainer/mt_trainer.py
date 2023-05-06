@@ -1279,8 +1279,7 @@ class MTDenseTrainer(DenseTrainer):
         logger.info(
             f"Loading best model from {self.state.best_model_checkpoint} "
             f"(score: {self.state.best_metric}).")
-        best_model_path = os.path.join(
-            self.state.best_model_checkpoint, "pytorch_model.bin")
+        best_model_path = self.state.best_model_checkpoint
         logger.info(f"loading best checkpoint path {best_model_path}")
         self.model = DenseModel.build(
             model_args=self.model_args,
