@@ -341,9 +341,9 @@ do
         --num_rands 32 \
         --split train \
         --seed 42 \
-        --use_doc_id_map \
         --truncate $p_len \
         --cache_dir $CACHE_DIR
+#        --use_doc_id_map \
 #        --add_rand_negs \
 
     echo "removing train ${mt_set} trec files"
@@ -362,7 +362,7 @@ do
   fi
 done
 
-echo "copy warmed up model to ance iter 0 model folder"
-cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0
-echo "deleting warmed up embeddings ... "
-rm $EMBEDDING_DIR/embeddings.corpus.rank.*
+#echo "copy warmed up model to ance iter 0 model folder"
+#cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0
+#echo "deleting warmed up embeddings ... "
+#rm $EMBEDDING_DIR/embeddings.corpus.rank.*
