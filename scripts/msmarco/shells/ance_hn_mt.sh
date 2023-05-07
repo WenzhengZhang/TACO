@@ -164,7 +164,7 @@ do
             --cache_dir $CACHE_DIR
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
-      if [ ${mt_set} == nq ] || [ ${mt_set} == msmarco ]; then
+      if [ ${mt_set} != zeshel ]; then
         python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \
             --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \

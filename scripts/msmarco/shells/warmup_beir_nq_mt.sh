@@ -308,22 +308,40 @@ do
 
   echo "building hard negatives of ance first episode for ${mt_set} ..."
 #  mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
-  python src/taco/dataset/build_hn.py  \
-      --tokenizer_name $PLM_DIR/t5-base-scaled  \
-      --hn_file $RESULT_DIR/${mt_set}/train.trec \
-      --qrels $RAW_DIR/train.qrel.tsv \
-      --queries $train_query_path \
-      --collection $train_corpus_path \
-      --save_to $ANCE_PROCESSED_DIR \
-      --template "Title: <title> Text: <text>" \
-      --add_rand_negs \
-      --num_hards 32 \
-      --num_rands 32 \
-      --split train \
-      --seed 42 \
-      --use_doc_id_map \
-      --truncate $p_len \
-      --cache_dir $CACHE_DIR
+  if [ ${mt_set} != zeshel ]; then
+    python src/taco/dataset/build_hn.py  \
+        --tokenizer_name $PLM_DIR/t5-base-scaled  \
+        --hn_file $RESULT_DIR/${mt_set}/train.trec \
+        --qrels $RAW_DIR/train.qrel.tsv \
+        --queries $train_query_path \
+        --collection $train_corpus_path \
+        --save_to $ANCE_PROCESSED_DIR \
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs \
+        --num_hards 32 \
+        --num_rands 32 \
+        --split train \
+        --seed 42 \
+        --truncate $p_len \
+        --cache_dir $CACHE_DIR
+  else
+    python src/taco/dataset/build_hn.py  \
+        --tokenizer_name $PLM_DIR/t5-base-scaled  \
+        --hn_file $RESULT_DIR/${mt_set}/train.trec \
+        --qrels $RAW_DIR/train.qrel.tsv \
+        --queries $train_query_path \
+        --collection $train_corpus_path \
+        --save_to $ANCE_PROCESSED_DIR \
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs \
+        --num_hards 32 \
+        --num_rands 32 \
+        --split train \
+        --seed 42 \
+        --use_doc_id_map \
+        --truncate $p_len \
+        --cache_dir $CACHE_DIR
+    fi
 
   echo "removing train ${mt_set} trec files"
   rm $RESULT_DIR/${mt_set}/train.trec

@@ -19,6 +19,7 @@ def get_corpus_id_map(corpus_path, output_corpus_path):
             tsv_w = csv.writer(fout, delimiter='\t')
             for i, line in tqdm(enumerate(tsv_r)):
                 _id, title, text = line
+                _id = _id.replace("\"", "")
                 doc_id_map[_id] = i
                 tsv_w.writerow([i, title, text])
     return doc_id_map
