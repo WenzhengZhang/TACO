@@ -6,6 +6,7 @@ import csv
 from taco.utils import get_idx
 from tqdm import tqdm
 import sys
+
 csv.field_size_limit(sys.maxsize)
 
 
@@ -46,6 +47,15 @@ def main(args):
     output_corpus_path = os.path.join(args.output_dir, args.corpus_name)
     print('get corpus id map and process corpus')
     doc_id_map = get_corpus_id_map(input_corpus_path, output_corpus_path)
+    if args.corpus_name != args.test_corpus_name:
+        input_test_corpus_path = os.path.join(args.input_dir,
+                                              args.test_corpus_name)
+        output_test_corpus_path = os.path.join(args.output_dir,
+                                               args.test_corpus_name)
+        test_doc_id_map = get_corpus_id_map(input_test_corpus_path,
+                                            output_test_corpus_path)
+    else:
+        test_doc_id_map = doc_id_map
     if args.map_train:
         print('map train qrels')
         input_qrel_path = os.path.join(args.input_dir, "train.qrel.tsv")
@@ -73,11 +83,11 @@ def main(args):
         print('map test qrels')
         input_qrel_path = os.path.join(args.input_dir, "test.qrel.tsv")
         output_qrel_path = os.path.join(args.output_dir, "test.qrel.tsv")
-        map_qrels(input_qrel_path, output_qrel_path, doc_id_map, "\t")
+        map_qrels(input_qrel_path, output_qrel_path, test_doc_id_map, "\t")
         print("map test qrels trec")
         input_qrel_path = os.path.join(args.input_dir, "test.qrel.trec")
         output_qrel_path = os.path.join(args.output_dir, "test.qrel.trec")
-        map_qrels(input_qrel_path, output_qrel_path, doc_id_map, " ")
+        map_qrels(input_qrel_path, output_qrel_path, test_doc_id_map, " ")
 
 
 if __name__ == '__main__':
@@ -85,6 +95,8 @@ if __name__ == '__main__':
     parser.add_argument('--input_dir', type=str)
     parser.add_argument('--output_dir', type=str)
     parser.add_argument('--corpus_name', type=str, default='psg_corpus.tsv')
+    parser.add_argument('--test_corpus_name', type=str,
+                        default='psg_corpus.tsv')
     parser.add_argument('--cache_dir', type=str)
     parser.add_argument('--map_train', action='store_true')
     parser.add_argument('--map_dev', action='store_true')
