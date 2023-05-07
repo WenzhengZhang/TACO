@@ -164,21 +164,39 @@ do
             --cache_dir $CACHE_DIR
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
-      python src/taco/dataset/build_hn.py  \
-          --tokenizer_name $PLM_DIR/t5-base-scaled  \
-          --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
-          --qrels $RAW_DIR/train.qrel.tsv \
-          --queries $train_query_path \
-          --collection $train_corpus_path \
-          --save_to $PROCESSED_DIR \
-          --template "Title: <title> Text: <text>" \
-          --num_hards 32 \
-          --num_rands 32 \
-          --split train \
-          --seed ${hn_iter} \
-          --use_doc_id_map \
-          --truncate $p_len \
-          --cache_dir $CACHE_DIR
+      if [ ${mt_set} == nq ] || [ ${mt_set} == msmarco ]; then
+        python src/taco/dataset/build_hn.py  \
+            --tokenizer_name $PLM_DIR/t5-base-scaled  \
+            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+            --qrels $RAW_DIR/train.qrel.tsv \
+            --queries $train_query_path \
+            --collection $train_corpus_path \
+            --save_to $PROCESSED_DIR \
+            --template "Title: <title> Text: <text>" \
+            --num_hards 32 \
+            --num_rands 32 \
+            --split train \
+            --seed ${hn_iter} \
+            --truncate $p_len \
+            --cache_dir $CACHE_DIR
+#            --use_doc_id_map \
+      else
+        python src/taco/dataset/build_hn.py  \
+            --tokenizer_name $PLM_DIR/t5-base-scaled  \
+            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+            --qrels $RAW_DIR/train.qrel.tsv \
+            --queries $train_query_path \
+            --collection $train_corpus_path \
+            --save_to $PROCESSED_DIR \
+            --template "Title: <title> Text: <text>" \
+            --num_hards 32 \
+            --num_rands 32 \
+            --split train \
+            --seed ${hn_iter} \
+            --use_doc_id_map \
+            --truncate $p_len \
+            --cache_dir $CACHE_DIR
+        fi
 
       echo "removing training trec file of ${mt_set}"
       rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
