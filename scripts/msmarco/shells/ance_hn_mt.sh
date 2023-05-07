@@ -87,11 +87,11 @@ do
       delimiter=","
     fi
     if [ ${mt_set} == zeshel ]; then
-      max_q_len=128
+      max_q_len=132
     elif [ ${mt_set} == fever ]; then
-      max_q_len=64
+      max_q_len=68
     else
-      max_q_len=32
+      max_q_len=36
     fi
     if [ ${mt_set} == zeshel ]; then
       dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
@@ -253,7 +253,6 @@ do
       --weight_method $mt_method \
       --select_all True \
       --multi_mix_temp 4.0 \
-      --add_query_task_prefix True \
       --log_gnorm False \
       --beta_taco 0.999 \
       --tau_taco 2 \
@@ -288,11 +287,11 @@ do
   for mt_set in ${mt_sets[@]}
   do
     if [ ${mt_set} == zeshel ]; then
-      max_q_len=128
+      max_q_len=132
     elif [ ${mt_set} == fever ]; then
-      max_q_len=64
+      max_q_len=68
     else
-      max_q_len=32
+      max_q_len=36
     fi
     if [ ${mt_set} == zeshel ]; then
       dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
