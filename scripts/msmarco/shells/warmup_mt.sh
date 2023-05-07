@@ -170,8 +170,8 @@ do
     train_corpus_path=$RAW_DIR/psg_corpus.tsv
     test_corpus_path=$RAW_DIR/psg_corpus.tsv
   fi
-  if [ ${mt_set} != msmarco ]; then
-    echo "building dev index "
+  if [ ${mt_set} == fever ] || [ ${mt_set} == nq ]; then
+    echo "building dev index for ${mt_set} "
   #  python src/taco/driver/build_index.py  \
     rm $EMBEDDING_DIR/embeddings.*
     python src/taco/driver/build_index.py \
