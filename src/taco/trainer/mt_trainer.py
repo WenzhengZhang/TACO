@@ -442,7 +442,7 @@ class MTDenseTrainer(DenseTrainer):
             else:
                 taco_warmup_steps = int(self.state.max_steps *
                                         self.args.warmup_ratio)
-                logger.info(f'warmup steps {taco_warmup_steps}')
+                # logger.info(f'warmup steps {taco_warmup_steps}')
                 # with torch.no_grad():
                 #     # T x p
                 ipt = self.get_ipt(grads)
