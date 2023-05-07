@@ -19,7 +19,7 @@ if [ -d $MODEL_DIR ]; then
 else
   echo "get initial model"
   mkdir -p $TACO_DIR"/model/ance_hn_mt/mt_msmarco/"
-  cp -r $TACO_DIR"/model/warmup_mt/mt_msmarco/naive/" $MODEL_DIR
+  cp -r $TACO_DIR"/model/ance_hn_mt/mt_msmarco/naive/" $MODEL_DIR
 fi
 #if [ -d $PROCESSED_DIR ]; then
 #  echo "$PROCESSED_DIR is not empty"
