@@ -74,7 +74,7 @@ class Retriever:
         # inside a DistributedDataParallel as we'll be under `no_grad` anyways.
         # Multi-gpu training (should be after apex fp16 initialization)
         if self.args.n_gpu > 1:
-            logger.info("use data parallel wrap the model")
+            print("use data parallel wrap the model")
             self.model = nn.DataParallel(self.model)
         if self.corpus_dataset is None:
             raise ValueError("No corpus dataset provided")
