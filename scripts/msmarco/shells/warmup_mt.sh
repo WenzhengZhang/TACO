@@ -184,7 +184,7 @@ do
         --q_max_len 32  \
         --p_max_len $p_len  \
         --fp16  \
-        --dataloader_num_workers 0 \
+        --dataloader_num_workers 32 \
         --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} ... "
@@ -260,7 +260,7 @@ do
             --q_max_len $max_q_len  \
             --p_max_len $p_len  \
             --fp16  \
-            --dataloader_num_workers 0 \
+            --dataloader_num_workers 32 \
             --cache_dir $CACHE_DIR
       fi
       echo "retrieve test ... "
@@ -296,7 +296,7 @@ do
         --q_max_len $max_q_len  \
         --p_max_len $p_len  \
         --fp16  \
-        --dataloader_num_workers 0 \
+        --dataloader_num_workers 32 \
         --cache_dir $CACHE_DIR
     fi
     echo "retrieving train ..."
