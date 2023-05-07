@@ -20,7 +20,7 @@ mkdir -p $ORIG_DIR
 cd $CODE_DIR
 
 echo "get train bm25 candidates first ... "
-if [ ${DATA_NAME} == "nq" ]; then
+if [ ${DATA_NAME} == nq ]; then
   echo "build lucene index"
   python -m pyserini.index.lucene \
     --collection BeirFlatCollection \
