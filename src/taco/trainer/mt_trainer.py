@@ -452,11 +452,11 @@ class MTDenseTrainer(DenseTrainer):
                 self.ipt_exp.mul_(
                     self.args.beta_taco).add_(ipt,
                                               alpha=1.0 - self.args.beta_taco)
-                if self.state.global_step < 10:
+                if self.state.global_step < taco_warmup_steps:
                     new_grads = grads.sum(0)
-                    if self.do_grad_scaling:
-                        new_grads = self.scale_grads(new_grads)
-                    self.reset_grads(new_grads)
+                    # if self.do_grad_scaling:
+                    #     new_grads = self.scale_grads(new_grads)
+                    # self.reset_grads(new_grads)
                 else:
                     if self.args.norm_ipt:
                         w_scores = self.ipt_exp / self.args.tau_taco
