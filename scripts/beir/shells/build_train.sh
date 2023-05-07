@@ -54,6 +54,11 @@ fi
 echo "build training data for warmup training ... "
 p_len=160
 mkdir -p $DATA_DIR/${DATA_NAME}/processed/bm25/
+if [ ${DATA_NAME} == nq ]; then
+  corpus_path=$DATA_DIR/${DATA_NAME}/raw/psg_corpus_train.tsv
+else
+  corpus_path=$DATA_DIR/${DATA_NAME}/raw/psg_corpus.tsv
+fi
 python src/taco/dataset/build_hn.py  \
   --tokenizer_name $PLM_DIR/t5-base-scaled  \
   --hn_file $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt \
