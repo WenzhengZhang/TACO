@@ -30,11 +30,11 @@ do
   if [ -f "$DATA_DIR/${dataset}/raw/test.query.txt" ]; then
     echo "$DATA_DIR/${dataset}/raw/test.query.txt already exists.";
   else
-#    echo "downloading ${dataset}"
-#    mkdir -p $DATA_DIR/${dataset}/raw/
-#  #  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
-#    python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
-#      --out_dir $ORIG_DIR
+    echo "downloading ${dataset}"
+    mkdir -p $DATA_DIR/${dataset}/raw/
+  #  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
+    python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
+      --out_dir $ORIG_DIR
     echo "process original ${dataset} to TACO format"
     if [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process both train,dev and test"
