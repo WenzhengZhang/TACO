@@ -127,8 +127,8 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_m
     --multi_mix_temp 4.0 \
     --add_query_task_prefix False \
     --log_gnorm False \
-    --data_cache_dir $CACHE_DIR \
-    --resume_from_checkpoint $MODEL_DIR/checkpoint-39040
+    --data_cache_dir $CACHE_DIR 
+#    --resume_from_checkpoint $MODEL_DIR/checkpoint-39040
 
 
 for mt_set in ${mt_sets[@]}
