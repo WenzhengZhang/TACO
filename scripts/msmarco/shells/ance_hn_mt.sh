@@ -235,7 +235,7 @@ do
       --num_train_epochs $epoch  \
       --epochs_per_hn $epoch_per_hn \
       --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
-      --negatives_x_device False \
+      --negatives_x_device True \
       --remove_unused_columns False \
       --overwrite_output_dir True \
       --dataloader_num_workers 0 \
