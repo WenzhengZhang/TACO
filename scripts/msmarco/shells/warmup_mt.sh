@@ -364,5 +364,5 @@ done
 
 #echo "copy warmed up model to ance iter 0 model folder"
 #cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0
-#echo "deleting warmed up embeddings ... "
-#rm $EMBEDDING_DIR/embeddings.corpus.rank.*
+echo "deleting warmed up embeddings ... "
+rm $EMBEDDING_DIR/embeddings.corpus.rank.*

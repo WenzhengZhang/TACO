@@ -380,6 +380,10 @@ class DenseTrainingArguments(TrainingArguments):
 class DenseEncodingArguments(DenseTrainingArguments):
     use_gpu: bool = field(default=False,
                           metadata={"help": "Use GPU for encoding"})
+    split_retrieve: bool = field(
+        default=False,
+        metadata={"help":"split retrieve"}
+    )
     encoded_save_path: str = field(default=None, metadata={
         "help": "where to save the encode"})
     trec_save_path: str = field(default=None, metadata={

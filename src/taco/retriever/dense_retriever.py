@@ -123,9 +123,10 @@ class Retriever:
                     encoded.append(
                         model_output.p_reps.cpu().detach().numpy().astype(
                             'float32'))
+        print('contatenate encoded embeddings ... ')
         encoded = np.concatenate(encoded)
-
         os.makedirs(self.args.output_dir, exist_ok=True)
+        print('pickle dumping embeddings ...')
         with open(os.path.join(self.args.output_dir,
                                "embeddings.corpus.rank.{}".format(
                                    self.args.process_index)), 'wb') as f:

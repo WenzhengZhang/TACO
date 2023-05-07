@@ -9,7 +9,7 @@ from taco.dataset import InferenceDataset
 from taco.modeling import DenseModelForInference
 from taco.retriever import Retriever
 from taco.utils import save_as_trec
-from transformers import AutoConfig, AutoTokenizer, HfArgumentParser,\
+from transformers import AutoConfig, AutoTokenizer, HfArgumentParser, \
     AutoProcessor
 
 logger = logging.getLogger(__name__)
@@ -89,8 +89,12 @@ def main():
         cache_dir=model_args.cache_dir,
     )
     query_dataset.task_name = data_args.task_name
-    retriever = Retriever.from_embeddings(model, encoding_args)
-    result = retriever.retrieve(query_dataset)
+    if encoding_args.split_retrieve:
+        retriever = Retriever(model, None, encoding_args)
+        result = retriever.split_retrieve(query_dataset)
+    else:
+        retriever = Retriever.from_embeddings(model, encoding_args)
+        result = retriever.retrieve(query_dataset)
     if encoding_args.local_process_index == 0:
         trec_save_dir = os.path.dirname(encoding_args.trec_save_path)
         if not os.path.exists(trec_save_dir):
