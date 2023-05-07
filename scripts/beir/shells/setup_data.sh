@@ -36,7 +36,16 @@ do
     python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
       --out_dir $ORIG_DIR
     echo "process original ${dataset} to TACO format"
-    if [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
+    if [ ${dataset} == "nq-train" ]; then
+      echo "process train only for nq-train"
+      python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
+        --processed_dir $DATA_DIR/${dataset}/raw \
+        --process_train \
+        --not_process_test \
+        --dataset_name ${dataset}
+      mv $DATA_DIR/${dataset}/raw/psg_corpus.tsv $DATA_DIR/${dataset}/raw/psg_corpus_train.tsv
+      mv $DATA_DIR/${dataset}/raw/*  $DATA_DIR/nq/raw/
+    elif [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process both train,dev and test"
       python $CODE_DIR/scripts/beir/preprocess_data.py --input_dir $ORIG_DIR \
         --processed_dir $DATA_DIR/${dataset}/raw \
