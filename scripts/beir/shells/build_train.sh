@@ -24,14 +24,14 @@ if [ ${DATA_NAME} == nq ]; then
   echo "build lucene index"
   python -m pyserini.index.lucene \
     --collection BeirFlatCollection \
-    --input $ORIG_DIR/${DATA_NAME}/corpus.jsonl \
-    --index $ORIG_DIR/indexes/beir-nq-train.jsonl \
+    --input $ORIG_DIR/${DATA_NAME}/ \
+    --index $ORIG_DIR/indexes/beir-nq-train \
     --generator DefaultLuceneDocumentGenerator \
     --threads 16 \
     --storePositions --storeDocvectors --storeRaw --optimize
     echo "bm25 retrieve for nq train"
     python -m pyserini.search.lucene   \
-      --index $ORIG_DIR/indexes/beir-nq-train.jsonl   \
+      --index $ORIG_DIR/indexes/beir-nq-train   \
       --topics $DATA_DIR/nq/raw/train.query.txt \
       --output $DATA_DIR/nq/raw/train.bm25.txt   \
       --output-format trec   \
