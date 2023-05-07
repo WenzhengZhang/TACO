@@ -27,7 +27,7 @@ mkdir -p $EVAL_DIR
 mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-mt_sets=(msmarco nq zeshel fever)
+mt_sets=(msmarco zeshel fever nq)
 
 SAVE_STEP=10000
 EVAL_STEP=300
@@ -173,6 +173,7 @@ do
   if [ ${mt_set} != msmarco ]; then
     echo "building dev index "
   #  python src/taco/driver/build_index.py  \
+    rm $EMBEDDING_DIR/embeddings.*
     python src/taco/driver/build_index.py \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
@@ -249,6 +250,7 @@ do
       echo "evaluate test data ... "
       if [ ${mt_set} == zeshel ]; then
         echo "build test index for zeshel"
+        rm $EMBEDDING_DIR/embeddings.*
         python src/taco/driver/build_index.py \
             --output_dir $EMBEDDING_DIR/ \
             --model_name_or_path $MODEL_DIR \
@@ -285,6 +287,7 @@ do
     echo "get preprocessed data of ${mt_set} for ance training"
     if [ ${mt_set} == zeshel ]; then
       echo "build train index for zeshel ... "
+      rm $EMBEDDING_DIR/embeddings.*
       python src/taco/driver/build_index.py \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
