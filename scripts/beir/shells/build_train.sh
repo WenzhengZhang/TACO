@@ -64,7 +64,7 @@ python src/taco/dataset/build_hn.py  \
   --hn_file $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt \
   --qrels $DATA_DIR/${DATA_NAME}/raw/train.qrel.tsv \
   --queries $DATA_DIR/${DATA_NAME}/raw/train.query.txt \
-  --collection $DATA_DIR/${DATA_NAME}/raw/psg_corpus.tsv \
+  --collection $corpus_path \
   --save_to $DATA_DIR/${DATA_NAME}/processed/bm25/ \
   --template "Title: <title> Text: <text>" \
   --add_rand_negs \
