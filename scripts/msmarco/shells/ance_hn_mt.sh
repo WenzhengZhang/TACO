@@ -18,7 +18,8 @@ if [ -d $MODEL_DIR ]; then
   echo "$MODEL_DIR is not empty"
 else
   echo "get initial model"
-  cp -r $TACO_DIR/model/ance_hn_mt/mt_msmarco/naive/ $MODEL_DIR
+  mkdir -p $TACO_DIR"/model/ance_hn_mt/mt_msmarco/"
+  cp -r $TACO_DIR"/model/warmup_mt/mt_msmarco/" $MODEL_DIR
 fi
 #if [ -d $PROCESSED_DIR ]; then
 #  echo "$PROCESSED_DIR is not empty"
@@ -159,7 +160,8 @@ do
             --split dev \
             --seed 42 \
             --use_doc_id_map \
-            --truncate $p_len
+            --truncate $p_len \
+            --cache_dir $CACHE_DIR
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
       python src/taco/dataset/build_hn.py  \
@@ -175,7 +177,8 @@ do
           --split train \
           --seed ${hn_iter} \
           --use_doc_id_map \
-          --truncate $p_len
+          --truncate $p_len \
+          --cache_dir $CACHE_DIR
 
       echo "removing training trec file of ${mt_set}"
       rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
@@ -249,7 +252,7 @@ do
   echo "evaluating for episode-${hn_iter} ..."
   echo "building dev index for  episode-${hn_iter} "
   #  python src/taco/driver/build_index.py  \
-  torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+  python src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
@@ -260,7 +263,8 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 0
+      --dataloader_num_workers 0 \
+      --cache_dir $CACHE_DIR
 
   for mt_set in ${mt_sets[@]}
   do
@@ -307,7 +311,8 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 0
+      --dataloader_num_workers 0 \
+      --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} for hn_iter ${hn_iter} ... "
     if [ ! -d "$RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/" ]; then
@@ -327,7 +332,8 @@ do
         --trec_save_path $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev.trec \
         --dataloader_num_workers 0 \
         --task_name ${mt_set^^} \
-        --add_query_task_prefix True
+        --add_query_task_prefix True \
+        --cache_dir $CACHE_DIR
 
     $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev_results.txt
     if [ ${mt_set} == nq ]; then
@@ -362,7 +368,8 @@ do
             --q_max_len $max_q_len  \
             --p_max_len $p_len  \
             --fp16  \
-            --dataloader_num_workers 0
+            --dataloader_num_workers 0 \
+            --cache_dir $CACHE_DIR
       fi
       echo "retrieve test ... "
       python -m src.taco.driver.retrieve  \
@@ -378,7 +385,8 @@ do
           --trec_save_path $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/test.trec \
           --dataloader_num_workers 0 \
           --task_name ${mt_set^^} \
-          --add_query_task_prefix True
+          --add_query_task_prefix True \
+          --cache_dir $CACHE_DIR
 
       echo "evaluate test trec ... "
       $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/test.trec > $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/test_results.txt
@@ -399,7 +407,8 @@ do
           --q_max_len $max_q_len  \
           --p_max_len $p_len  \
           --fp16  \
-          --dataloader_num_workers 0
+          --dataloader_num_workers 0 \
+          --cache_dir $CACHE_DIR
       fi
       echo "retrieve train trec"
       if [ ${mt_set} == msmarco ]; then
@@ -427,7 +436,8 @@ do
           --dataloader_num_workers 0 \
           --topk 110 \
           --task_name ${mt_set^^} \
-          --add_query_task_prefix True
+          --add_query_task_prefix True \
+          --cache_dir $CACHE_DIR
     fi
 
   done

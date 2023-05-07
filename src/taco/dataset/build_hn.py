@@ -58,6 +58,7 @@ if __name__ == '__main__':
     parser.add_argument('--add_rand_negs', action='store_true')
     parser.add_argument('--use_doc_id_map', action='store_true')
     parser.add_argument('--split', type=str, default='train')
+    parser.add_argument('--cache_dir', type=str,default=None)
 
     args = parser.parse_args()
     random.seed(args.seed)
@@ -73,7 +74,8 @@ if __name__ == '__main__':
         template=args.template,
         add_rand_negs=args.add_rand_negs,
         num_rands=args.num_rands,
-        use_doc_id_map=args.use_doc_id_map
+        use_doc_id_map=args.use_doc_id_map,
+        cache_dir=args.cache_dir
     )
     counter = 0
     shard_id = 0

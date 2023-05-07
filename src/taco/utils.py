@@ -106,6 +106,7 @@ class SimpleTrainPreProcessor:
     add_rand_negs: bool = False
     num_rands: int = 32
     use_doc_id_map: bool = False
+    cache_dir: str = None
 
     def __post_init__(self):
         self.queries = self.read_queries(self.query_file)
@@ -114,7 +115,8 @@ class SimpleTrainPreProcessor:
             data_files=self.collection_file,
             column_names=self.columns,
             delimiter='\t',
-            keep_default_na=False
+            keep_default_na=False,
+            cache_dir=self.cache_dir
         )['train']
         if self.use_doc_id_map:
             self.doc_id_map = self.get_doc_id_map()

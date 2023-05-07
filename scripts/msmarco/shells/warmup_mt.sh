@@ -184,7 +184,8 @@ do
         --q_max_len 32  \
         --p_max_len $p_len  \
         --fp16  \
-        --dataloader_num_workers 0
+        --dataloader_num_workers 0 \
+        --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} ... "
     if [ ! -d "$RESULT_DIR/${mt_set}" ]; then
@@ -202,7 +203,8 @@ do
         --q_max_len $max_q_len  \
         --fp16  \
         --trec_save_path $RESULT_DIR/${mt_set}/dev.trec \
-        --dataloader_num_workers 0
+        --dataloader_num_workers 0 \
+        --cache_dir $CACHE_DIR
 
     $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/dev.trec > $RESULT_DIR/${mt_set}/dev_results.txt
     if [ ${mt_set} == nq ]; then
@@ -238,7 +240,8 @@ do
           --split dev \
           --seed 42 \
           --use_doc_id_map \
-          --truncate $p_len
+          --truncate $p_len \
+          --cache_dir $CACHE_DIR
 
     fi
 
@@ -257,7 +260,8 @@ do
             --q_max_len $max_q_len  \
             --p_max_len $p_len  \
             --fp16  \
-            --dataloader_num_workers 0
+            --dataloader_num_workers 0 \
+            --cache_dir $CACHE_DIR
       fi
       echo "retrieve test ... "
       python -m src.taco.driver.retrieve  \
@@ -271,83 +275,87 @@ do
           --q_max_len $max_q_len  \
           --fp16  \
           --trec_save_path $RESULT_DIR/${mt_set}/test.trec \
-          --dataloader_num_workers 0
+          --dataloader_num_workers 0 \
+          --cache_dir $CACHE_DIR
 
       echo "evaluate test trec ... "
       $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/${mt_set}/test.trec > $RESULT_DIR/${mt_set}/test_results.txt
 
     fi
-  fi
-  echo "get preprocessed data of ${mt_set} for ance training"
-  if [ ${mt_set} == zeshel ]; then
-    echo "build train index for zeshel ... "
-    python src/taco/driver/build_index.py \
-      --output_dir $EMBEDDING_DIR/ \
-      --model_name_or_path $MODEL_DIR \
-      --per_device_eval_batch_size $infer_bsz  \
-      --corpus_path $train_corpus_path  \
-      --encoder_only False  \
-      --doc_template "Title: <title> Text: <text>"  \
-      --doc_column_names id,title,text \
-      --q_max_len $max_q_len  \
-      --p_max_len $p_len  \
-      --fp16  \
-      --dataloader_num_workers 0
-  fi
-  echo "retrieving train ..."
-  if [ ${mt_set} == msmarco ]; then
-    echo "random down_sample msmarco"
-    export RANDOM=42
-    echo "random down_sample train queries ... "
-    shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
-    train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
-  else
-    train_query_path=$RAW_DIR/train.query.txt
-  fi
-  python -m src.taco.driver.retrieve  \
-      --output_dir $EMBEDDING_DIR/ \
-      --model_name_or_path $MODEL_DIR \
-      --per_device_eval_batch_size $infer_bsz  \
-      --query_path $train_query_path  \
-      --encoder_only False  \
-      --query_template "<text>"  \
-      --query_column_names  id,text \
-      --q_max_len $max_q_len  \
-      --fp16  \
-      --trec_save_path $RESULT_DIR/${mt_set}/train.trec \
-      --dataloader_num_workers 0 \
-      --topk 100
+    echo "get preprocessed data of ${mt_set} for ance training"
+    if [ ${mt_set} == zeshel ]; then
+      echo "build train index for zeshel ... "
+      python src/taco/driver/build_index.py \
+        --output_dir $EMBEDDING_DIR/ \
+        --model_name_or_path $MODEL_DIR \
+        --per_device_eval_batch_size $infer_bsz  \
+        --corpus_path $train_corpus_path  \
+        --encoder_only False  \
+        --doc_template "Title: <title> Text: <text>"  \
+        --doc_column_names id,title,text \
+        --q_max_len $max_q_len  \
+        --p_max_len $p_len  \
+        --fp16  \
+        --dataloader_num_workers 0 \
+        --cache_dir $CACHE_DIR
+    fi
+    echo "retrieving train ..."
+    if [ ${mt_set} == msmarco ]; then
+      echo "random down_sample msmarco"
+      export RANDOM=42
+      echo "random down_sample train queries ... "
+      shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
+      train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
+    else
+      train_query_path=$RAW_DIR/train.query.txt
+    fi
+    python -m src.taco.driver.retrieve  \
+        --output_dir $EMBEDDING_DIR/ \
+        --model_name_or_path $MODEL_DIR \
+        --per_device_eval_batch_size $infer_bsz  \
+        --query_path $train_query_path  \
+        --encoder_only False  \
+        --query_template "<text>"  \
+        --query_column_names  id,text \
+        --q_max_len $max_q_len  \
+        --fp16  \
+        --trec_save_path $RESULT_DIR/${mt_set}/train.trec \
+        --dataloader_num_workers 0 \
+        --topk 100 \
+        --cache_dir $CACHE_DIR
 
-  echo "building hard negatives of ance first episode for ${mt_set} ..."
-#  mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
-  python src/taco/dataset/build_hn.py  \
-      --tokenizer_name $PLM_DIR/t5-base-scaled  \
-      --hn_file $RESULT_DIR/${mt_set}/train.trec \
-      --qrels $RAW_DIR/train.qrel.tsv \
-      --queries $train_query_path \
-      --collection $train_corpus_path \
-      --save_to $ANCE_PROCESSED_DIR \
-      --template "Title: <title> Text: <text>" \
-      --add_rand_negs \
-      --num_hards 32 \
-      --num_rands 32 \
-      --split train \
-      --seed 42 \
-      --use_doc_id_map \
-      --truncate $p_len
+    echo "building hard negatives of ance first episode for ${mt_set} ..."
+  #  mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
+    python src/taco/dataset/build_hn.py  \
+        --tokenizer_name $PLM_DIR/t5-base-scaled  \
+        --hn_file $RESULT_DIR/${mt_set}/train.trec \
+        --qrels $RAW_DIR/train.qrel.tsv \
+        --queries $train_query_path \
+        --collection $train_corpus_path \
+        --save_to $ANCE_PROCESSED_DIR \
+        --template "Title: <title> Text: <text>" \
+        --add_rand_negs \
+        --num_hards 32 \
+        --num_rands 32 \
+        --split train \
+        --seed 42 \
+        --use_doc_id_map \
+        --truncate $p_len \
+        --cache_dir $CACHE_DIR
 
-  echo "removing train ${mt_set} trec files"
-  rm $RESULT_DIR/${mt_set}/train.trec
+    echo "removing train ${mt_set} trec files"
+    rm $RESULT_DIR/${mt_set}/train.trec
 
-  echo "splitting ${mt_set} hn file"
-  if [ ${mt_set} == zeshel ]; then
-    mv $ANCE_PROCESSED_DIR/train_all.jsonl  $ANCE_PROCESSED_DIR/train.jsonl
-    echo "splitting zeshel dev hn file"
-    tail -n 500 $ANCE_PROCESSED_DIR/dev_all.jsonl > $ANCE_PROCESSED_DIR/val.jsonl
-  else
-    tail -n 500 $ANCE_PROCESSED_DIR/train_all.jsonl > $ANCE_PROCESSED_DIR/val.jsonl
-    head -n -500 $ANCE_PROCESSED_DIR/train_all.jsonl > $ANCE_PROCESSED_DIR/train.jsonl
-    rm $ANCE_PROCESSED_DIR/train_all.jsonl
+    echo "splitting ${mt_set} hn file"
+    if [ ${mt_set} == zeshel ]; then
+      mv $ANCE_PROCESSED_DIR/train_all.jsonl  $ANCE_PROCESSED_DIR/train.jsonl
+      echo "splitting zeshel dev hn file"
+      tail -n 500 $ANCE_PROCESSED_DIR/dev_all.jsonl > $ANCE_PROCESSED_DIR/val.jsonl
+    else
+      tail -n 500 $ANCE_PROCESSED_DIR/train_all.jsonl > $ANCE_PROCESSED_DIR/val.jsonl
+      head -n -500 $ANCE_PROCESSED_DIR/train_all.jsonl > $ANCE_PROCESSED_DIR/train.jsonl
+      rm $ANCE_PROCESSED_DIR/train_all.jsonl
+    fi
   fi
 done
 
