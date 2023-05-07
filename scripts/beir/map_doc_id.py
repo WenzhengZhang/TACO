@@ -5,6 +5,8 @@ from datasets import load_dataset
 import csv
 from taco.utils import get_idx
 from tqdm import tqdm
+import sys
+csv.field_size_limit(sys.maxsize)
 
 
 def get_corpus_id_map(corpus_path, output_corpus_path):
