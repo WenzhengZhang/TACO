@@ -79,6 +79,7 @@ class Retriever:
         if self.corpus_dataset is None:
             raise ValueError("No corpus dataset provided")
         if isinstance(self.corpus_dataset, torch.utils.data.IterableDataset):
+            logger.info("corpus dataset is iterable")
             if self.args.world_size > 1:
                 self.corpus_dataset = IterableDatasetShard(
                     self.corpus_dataset,
@@ -95,6 +96,7 @@ class Retriever:
                 pin_memory=self.args.dataloader_pin_memory,
             )
         else:
+            logger.info('non iterable dataset')
             if self.args.local_rank != -1:
                 eval_sampler = SequentialDistributedSampler(self.corpus_dataset)
             else:
