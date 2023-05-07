@@ -19,37 +19,37 @@ mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
 cd $CODE_DIR
 
-echo "get train bm25 candidates first ... "
-if [ ${DATA_NAME} == nq ]; then
-  echo "build lucene index"
-  python -m pyserini.index.lucene \
-    --collection BeirFlatCollection \
-    --input $ORIG_DIR/${DATA_NAME}/ \
-    --index $ORIG_DIR/indexes/beir-nq-train \
-    --generator DefaultLuceneDocumentGenerator \
-    --threads 16 \
-    --storePositions --storeDocvectors --storeRaw --optimize
-    echo "bm25 retrieve for nq train"
-    python -m pyserini.search.lucene   \
-      --index $ORIG_DIR/indexes/beir-nq-train   \
-      --topics $DATA_DIR/nq/raw/train.query.txt \
-      --output $DATA_DIR/nq/raw/train.bm25.txt   \
-      --output-format trec   \
-      --batch 36 --threads 12 \
-      --hits 100 \
-      --bm25 \
-      --remove-query
-else
-  python -m pyserini.search.lucene   \
-    --index beir-v1.0.0-${DATA_NAME}-flat   \
-    --topics $DATA_DIR/${DATA_NAME}/raw/train.query.txt \
-    --output $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt   \
-    --output-format trec   \
-    --batch 36 --threads 12 \
-    --hits 100 \
-    --bm25 \
-    --remove-query
-fi
+#echo "get train bm25 candidates first ... "
+#if [ ${DATA_NAME} == nq ]; then
+#  echo "build lucene index"
+#  python -m pyserini.index.lucene \
+#    --collection BeirFlatCollection \
+#    --input $ORIG_DIR/${DATA_NAME}/ \
+#    --index $ORIG_DIR/indexes/beir-nq-train \
+#    --generator DefaultLuceneDocumentGenerator \
+#    --threads 16 \
+#    --storePositions --storeDocvectors --storeRaw --optimize
+#    echo "bm25 retrieve for nq train"
+#    python -m pyserini.search.lucene   \
+#      --index $ORIG_DIR/indexes/beir-nq-train   \
+#      --topics $DATA_DIR/nq/raw/train.query.txt \
+#      --output $DATA_DIR/nq/raw/train.bm25.txt   \
+#      --output-format trec   \
+#      --batch 36 --threads 12 \
+#      --hits 100 \
+#      --bm25 \
+#      --remove-query
+#else
+#  python -m pyserini.search.lucene   \
+#    --index beir-v1.0.0-${DATA_NAME}-flat   \
+#    --topics $DATA_DIR/${DATA_NAME}/raw/train.query.txt \
+#    --output $DATA_DIR/${DATA_NAME}/raw/train.bm25.txt   \
+#    --output-format trec   \
+#    --batch 36 --threads 12 \
+#    --hits 100 \
+#    --bm25 \
+#    --remove-query
+#fi
 
 echo "build training data for warmup training ... "
 p_len=160
