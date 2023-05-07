@@ -15,7 +15,7 @@ def get_corpus_id_map(corpus_path, output_corpus_path):
     with open(corpus_path, 'r') as fin:
         with open(output_corpus_path, 'w',
                   newline='') as fout:
-            tsv_r = csv.reader(fin, delimiter="\t", quotechar='"')
+            tsv_r = csv.reader(fin, delimiter="\t")
             tsv_w = csv.writer(fout, delimiter='\t')
             for i, line in tqdm(enumerate(tsv_r)):
                 _id, title, text = line
