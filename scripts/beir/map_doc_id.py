@@ -41,7 +41,7 @@ def map_hn(input_path, output_path, doc_id_map):
         writer = csv.writer(fo, delimiter=" ")
         for i, line in tqdm(enumerate(reader)):
             q_0, k1, p_0, k2, k3, k4 = line
-            p_0 = p_0.replace("\"")
+            p_0 = p_0.replace("\"","")
             writer.writerow([q_0, k1, doc_id_map[p_0], k2, k3, k4])
 
 
