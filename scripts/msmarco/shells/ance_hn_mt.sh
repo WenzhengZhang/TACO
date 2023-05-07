@@ -265,7 +265,8 @@ do
       --hard_negative_mining True \
       --rands_ratio $rands_ratio \
       --add_query_task_prefix True \
-      --resume_from_checkpoint $resume
+      --resume_from_checkpoint $resume \
+      --data_cache_dir $CACHE_DIR
 
   echo "evaluating for episode-${hn_iter} ..."
   echo "building dev index for  episode-${hn_iter} "
