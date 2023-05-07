@@ -18,10 +18,14 @@ mkdir -p $DATA_DIR
 mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
 cd $ORIG_DIR
-beir_sets=(trec-covid nfcorpus fiqa arguana webis-touche2020 quora scidocs scifact nq hotpotqa dbpedia-entity fever climate-fever)
-has_train_sets=(nfcorpus hotpotqa fiqa fever scifact)
-has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
-has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
+#beir_sets=(trec-covid nfcorpus fiqa arguana webis-touche2020 quora scidocs scifact nq hotpotqa dbpedia-entity fever climate-fever)
+beir_sets=(nq-train)
+#has_train_sets=(nfcorpus hotpotqa fiqa fever scifact)
+has_train_sets=(nq-train)
+#has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
+has_dev_sets=(nq-train)
+#has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
+has_train_dev_sets=(nq-train)
 for dataset in ${beir_sets[@]}
 do
   if [ -d "$DATA_DIR/${dataset}/raw/" ]; then

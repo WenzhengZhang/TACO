@@ -54,7 +54,7 @@ p_len=160
 log_step=100
 bsz=30
 n_passages=8
-infer_bsz=256
+infer_bsz=4096
 #mt_method="naive"
 rands_ratio=0.5
 n_gpu=8
@@ -263,7 +263,7 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 0 \
+      --dataloader_num_workers 32 \
       --cache_dir $CACHE_DIR
 
   for mt_set in ${mt_sets[@]}
@@ -311,7 +311,7 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 0 \
+      --dataloader_num_workers 32 \
       --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} for hn_iter ${hn_iter} ... "
@@ -368,7 +368,7 @@ do
             --q_max_len $max_q_len  \
             --p_max_len $p_len  \
             --fp16  \
-            --dataloader_num_workers 0 \
+            --dataloader_num_workers 32 \
             --cache_dir $CACHE_DIR
       fi
       echo "retrieve test ... "
@@ -407,7 +407,7 @@ do
           --q_max_len $max_q_len  \
           --p_max_len $p_len  \
           --fp16  \
-          --dataloader_num_workers 0 \
+          --dataloader_num_workers 32 \
           --cache_dir $CACHE_DIR
       fi
       echo "retrieve train trec"
