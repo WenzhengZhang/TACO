@@ -22,20 +22,19 @@ cd $ORIG_DIR
 beir_sets=(nq-train)
 #has_train_sets=(nfcorpus hotpotqa fiqa fever scifact)
 has_train_sets=(nq-train)
-#has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
-has_dev_sets=(nq-train)
-#has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
-has_train_dev_sets=(nq-train)
+has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
+has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
+
 for dataset in ${beir_sets[@]}
 do
-  if [ -d "$DATA_DIR/${dataset}/raw/" ]; then
-    echo "$DATA_DIR/${dataset}/raw already exists.";
+  if [ -f "$DATA_DIR/${dataset}/raw/test.query.txt" ]; then
+    echo "$DATA_DIR/${dataset}/raw/test.query.txt already exists.";
   else
-    echo "downloading ${dataset}"
-    mkdir -p $DATA_DIR/${dataset}/raw/
-  #  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
-    python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
-      --out_dir $ORIG_DIR
+#    echo "downloading ${dataset}"
+#    mkdir -p $DATA_DIR/${dataset}/raw/
+#  #  mkdir -p $PROCESSED_DIR/"bm25/"$dataset
+#    python $CODE_DIR/scripts/beir/download_data.py --dataset_name ${dataset} \
+#      --out_dir $ORIG_DIR
     echo "process original ${dataset} to TACO format"
     if [[ " ${has_train_dev_sets[*]} " =~ " ${dataset} " ]]; then
       echo "process both train,dev and test"
