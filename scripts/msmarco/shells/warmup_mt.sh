@@ -302,16 +302,16 @@ do
 #      --dataloader_num_workers 32 \
 #      --cache_dir $CACHE_DIR
 #  fi
-#  echo "retrieving train ..."
-#  if [ ${mt_set} == msmarco ]; then
-#    echo "random down_sample msmarco"
-#    export RANDOM=42
-#    echo "random down_sample train queries ... "
-#    shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
-#    train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
-#  else
-#    train_query_path=$RAW_DIR/train.query.txt
-#  fi
+  echo "retrieving train ..."
+  if [ ${mt_set} == msmarco ]; then
+    echo "random down_sample msmarco"
+    export RANDOM=42
+    echo "random down_sample train queries ... "
+    shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
+    train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
+  else
+    train_query_path=$RAW_DIR/train.query.txt
+  fi
 #  python -m src.taco.driver.retrieve  \
 #      --output_dir $EMBEDDING_DIR/ \
 #      --model_name_or_path $MODEL_DIR \
