@@ -93,21 +93,6 @@ do
     else
       max_q_len=36
     fi
-    if [ ${mt_set} == zeshel ]; then
-      dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
-      train_corpus_path=$RAW_DIR/psg_corpus_train.tsv
-      test_corpus_path=$RAW_DIR/psg_corpus_test.tsv
-    elif [ ${mt_set} == nq ]; then
-      dev_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
-      train_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
-      test_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
-    else
-      dev_corpus_path=$RAW_DIR/psg_corpus.tsv
-      train_corpus_path=$RAW_DIR/psg_corpus.tsv
-      test_corpus_path=$RAW_DIR/psg_corpus.tsv
-    fi
-    max_p_len=160
-    n_passage=8
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
       NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
@@ -124,6 +109,22 @@ do
       NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     fi
+    if [ ${mt_set} == zeshel ]; then
+      dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
+      train_corpus_path=$RAW_DIR/psg_corpus_train.tsv
+      test_corpus_path=$RAW_DIR/psg_corpus_test.tsv
+    elif [ ${mt_set} == nq ]; then
+      dev_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+      train_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+      test_corpus_path=$DATA_DIR/kilt/corpus/psg_corpus.tsv
+    else
+      dev_corpus_path=$RAW_DIR/psg_corpus.tsv
+      train_corpus_path=$RAW_DIR/psg_corpus.tsv
+      test_corpus_path=$RAW_DIR/psg_corpus.tsv
+    fi
+    max_p_len=160
+    n_passage=8
+
     if [ $hn_iter == 0 ]; then
       echo "initial processed data should be obtained after warmup training"
       mkdir -p $PREFIX_PROCESSED
@@ -212,77 +213,61 @@ do
       fi
     fi
   done
+  if [ ${hn_iter} !=0 ]; then
+    echo "start hn training for for episode-${hn_iter} ..."
 
-  echo "start hn training for for episode-${hn_iter} ..."
-
-  torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
-      --output_dir $MODEL_DIR  \
-      --model_name_or_path $MODEL_DIR  \
-      --do_train  \
-      --eval_delay $eval_delay \
-      --save_strategy epoch \
-      --evaluation_strategy epoch \
-      --logging_steps $log_step \
-      --mt_train_paths $mt_train_paths  \
-      --mt_eval_paths $mt_eval_paths \
-      --fp16  \
-      --per_device_train_batch_size $bsz  \
-      --mt_train_n_passages $mt_n_passages \
-      --learning_rate $lr  \
-      --q_max_lens $max_q_lens  \
-      --p_max_lens $max_p_lens \
-      --task_names $task_names \
-      --num_train_epochs $epoch  \
-      --epochs_per_hn $epoch_per_hn \
-      --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
-      --negatives_x_device True \
-      --remove_unused_columns False \
-      --overwrite_output_dir True \
-      --dataloader_num_workers 0 \
-      --multi_label False \
-      --in_batch_negatives True \
-      --pooling first \
-      --positive_passage_no_shuffle True \
-      --negative_passage_no_shuffle True \
-      --add_rand_negs False \
-      --encoder_only False \
-      --save_total_limit 2 \
-      --load_best_model_at_end False \
-      --metric_for_best_model loss \
-      --up_sample True \
-      --weight_method $mt_method \
-      --select_all True \
-      --multi_mix_temp 4.0 \
-      --log_gnorm False \
-      --beta_taco 0.999 \
-      --tau_taco 2 \
-      --beta_gn 1.5 \
-      --beta_cgd 0.25 \
-      --tau_cgd 100 \
-      --norm_grad True \
-      --norm_ipt True \
-      --hard_negative_mining True \
-      --rands_ratio $rands_ratio \
-      --add_query_task_prefix True \
-      --resume_from_checkpoint $resume \
-      --data_cache_dir $CACHE_DIR
-
-  echo "evaluating for episode-${hn_iter} ..."
-  echo "building dev index for  episode-${hn_iter} "
-  #  python src/taco/driver/build_index.py  \
-  python src/taco/driver/build_index.py \
-      --output_dir $EMBEDDING_DIR/ \
-      --model_name_or_path $MODEL_DIR \
-      --per_device_eval_batch_size $infer_bsz  \
-      --corpus_path $DATA_DIR/corpus/psg_corpus.tsv  \
-      --encoder_only False  \
-      --doc_template "Title: <title> Text: <text>"  \
-      --doc_column_names id,title,text \
-      --q_max_len 32  \
-      --p_max_len $p_len  \
-      --fp16  \
-      --dataloader_num_workers 32 \
-      --cache_dir $CACHE_DIR
+    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
+        --output_dir $MODEL_DIR  \
+        --model_name_or_path $MODEL_DIR  \
+        --do_train  \
+        --eval_delay $eval_delay \
+        --save_strategy epoch \
+        --evaluation_strategy epoch \
+        --logging_steps $log_step \
+        --mt_train_paths $mt_train_paths  \
+        --mt_eval_paths $mt_eval_paths \
+        --fp16  \
+        --per_device_train_batch_size $bsz  \
+        --mt_train_n_passages $mt_n_passages \
+        --learning_rate $lr  \
+        --q_max_lens $max_q_lens  \
+        --p_max_lens $max_p_lens \
+        --task_names $task_names \
+        --num_train_epochs $epoch  \
+        --epochs_per_hn $epoch_per_hn \
+        --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
+        --negatives_x_device True \
+        --remove_unused_columns False \
+        --overwrite_output_dir True \
+        --dataloader_num_workers 0 \
+        --multi_label False \
+        --in_batch_negatives True \
+        --pooling first \
+        --positive_passage_no_shuffle True \
+        --negative_passage_no_shuffle True \
+        --add_rand_negs False \
+        --encoder_only False \
+        --save_total_limit 2 \
+        --load_best_model_at_end False \
+        --metric_for_best_model loss \
+        --up_sample True \
+        --weight_method $mt_method \
+        --select_all True \
+        --multi_mix_temp 4.0 \
+        --log_gnorm False \
+        --beta_taco 0.999 \
+        --tau_taco 2 \
+        --beta_gn 1.5 \
+        --beta_cgd 0.25 \
+        --tau_cgd 100 \
+        --norm_grad True \
+        --norm_ipt True \
+        --hard_negative_mining True \
+        --rands_ratio $rands_ratio \
+        --add_query_task_prefix True \
+        --resume_from_checkpoint $resume \
+        --data_cache_dir $CACHE_DIR
+  fi
 
   for mt_set in ${mt_sets[@]}
   do
@@ -293,6 +278,17 @@ do
     else
       max_q_len=36
     fi
+    if [ ${mt_set} == nq ]; then
+      RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
+      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
+    elif [ ${mt_set} == fever ]; then
+      RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
+      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
+    else
+      RAW_DIR=$DATA_DIR/${mt_set}/raw/
+      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
+    fi
+    mkdir -p $PROCESSED_DIR
     if [ ${mt_set} == zeshel ]; then
       dev_corpus_path=$RAW_DIR/psg_corpus_dev.tsv
       train_corpus_path=$RAW_DIR/psg_corpus_train.tsv
@@ -306,17 +302,7 @@ do
       train_corpus_path=$RAW_DIR/psg_corpus.tsv
       test_corpus_path=$RAW_DIR/psg_corpus.tsv
     fi
-    if [ ${mt_set} == nq ]; then
-      RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
-    elif [ ${mt_set} == fever ]; then
-      RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
-    else
-      RAW_DIR=$DATA_DIR/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
-    fi
-    mkdir -p $PROCESSED_DIR
+
     echo "build dev index for hn_iter ${hn_iter} ... "
     python src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
