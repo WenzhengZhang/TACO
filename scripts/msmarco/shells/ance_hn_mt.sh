@@ -305,7 +305,8 @@ do
     fi
 
     echo "build dev index for hn_iter ${hn_iter} ... "
-    python src/taco/driver/build_index.py \
+    rm $EMBEDDING_DIR/embeddings.*
+    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
       --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
@@ -338,7 +339,9 @@ do
         --dataloader_num_workers 0 \
         --task_name ${mt_set^^} \
         --add_query_task_prefix True \
-        --cache_dir $CACHE_DIR
+        --cache_dir $CACHE_DIR \
+        --split_retrieve \
+        --use_gpu
 
     $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev_results.txt
     if [ ${mt_set} == nq ]; then
@@ -362,6 +365,7 @@ do
       echo "evaluate test data ... "
       if [ ${mt_set} == zeshel ]; then
         echo "build test index for zeshel"
+        rm $EMBEDDING_DIR/embeddings.*
         python src/taco/driver/build_index.py \
             --output_dir $EMBEDDING_DIR/ \
             --model_name_or_path $MODEL_DIR \
@@ -401,6 +405,7 @@ do
     if [ ${hn_iter} != ${last_hn_iter} ]; then
       if [ ${mt_set} == zeshel ]; then
         echo "build train index for zeshel ... "
+        rm $EMBEDDING_DIR/embeddings.*
         python src/taco/driver/build_index.py \
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR \
