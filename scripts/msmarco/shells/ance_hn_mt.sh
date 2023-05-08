@@ -213,7 +213,7 @@ do
       fi
     fi
   done
-  
+
   if [ $hn_iter != 0 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
@@ -340,7 +340,7 @@ do
         --add_query_task_prefix True \
         --cache_dir $CACHE_DIR
 
-    $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.20,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev_results.txt
+    $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev.trec > $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}/dev_results.txt
     if [ ${mt_set} == nq ]; then
       echo "page-level scoring ..."
       python scripts/kilt/convert_trec_to_provenance.py  \
