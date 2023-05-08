@@ -214,7 +214,7 @@ do
     fi
   done
 
-  if [ $hn_iter != 0 ]; then
+  if [ $hn_iter != -1 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
