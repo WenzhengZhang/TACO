@@ -305,7 +305,7 @@ do
       train_corpus_path=$RAW_DIR/psg_corpus.tsv
       test_corpus_path=$RAW_DIR/psg_corpus.tsv
     fi
-    if [ $hn_iter != 0 ] || [ ${mt_set} ==nq ]; then
+    if [ $hn_iter != 0 ] || [ ${mt_set} == nq ]; then
       echo "build dev index for hn_iter ${hn_iter} ... "
       rm $EMBEDDING_DIR/embeddings.*
       python src/taco/driver/build_index.py \
