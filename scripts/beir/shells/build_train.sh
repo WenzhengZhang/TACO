@@ -72,8 +72,8 @@ python src/taco/dataset/build_hn.py  \
   --num_rands 32 \
   --split train \
   --seed 42 \
-  --truncate $p_len \
-  --use_doc_id_map
+  --truncate $p_len
+#  --use_doc_id_map
 
 echo "split train into train and val"
 tail -n 500 $DATA_DIR/${DATA_NAME}/processed/bm25/train_all.jsonl > $DATA_DIR/${DATA_NAME}/processed/bm25/val.jsonl
