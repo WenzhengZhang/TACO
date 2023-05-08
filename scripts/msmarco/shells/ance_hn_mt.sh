@@ -340,7 +340,7 @@ do
         --dataloader_num_workers 0 \
         --task_name ${mt_set^^} \
         --add_query_task_prefix True \
-        --cache_dir $CACHE_DIR 
+        --cache_dir $CACHE_DIR
 #        --split_retrieve \
 #        --use_gpu
 
