@@ -214,7 +214,7 @@ do
     fi
   done
 
-  if [ $hn_iter != -1 ]; then
+  if [ $hn_iter != 0 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
@@ -319,7 +319,7 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 32 \
+      --dataloader_num_workers 8 \
       --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} for hn_iter ${hn_iter} ... "
