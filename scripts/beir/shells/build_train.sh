@@ -1,6 +1,7 @@
 #!/bin/bash
 DATA_NAME=$1
 HOME_DIR="/common/users/wz283/projects/"
+CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
@@ -72,7 +73,8 @@ python src/taco/dataset/build_hn.py  \
   --num_rands 32 \
   --split train \
   --seed 42 \
-  --truncate $p_len
+  --truncate $p_len \
+  --cache_dir $CACHE_DIR
 #  --use_doc_id_map
 
 echo "split train into train and val"
