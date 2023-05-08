@@ -225,7 +225,7 @@ do
     fi
   fi
 
-  if [ ${mt_set} == zeshel ] || [ ${mt_set} == fever ] || [ ${mt_set} == nq ]; then
+  if [ ${mt_set} != msmarco ]; then
     echo "evaluate test data ... "
     if [ ${mt_set} == zeshel ]; then
       echo "build test index for zeshel"
