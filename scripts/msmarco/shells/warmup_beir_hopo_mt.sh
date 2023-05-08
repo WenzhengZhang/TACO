@@ -260,7 +260,7 @@ do
 
   fi
   echo "get preprocessed data of ${mt_set} for ance training"
-  if [ ${mt_set} == zeshel ] || [ ${mt_set} == hopo ]; then
+  if [ ${mt_set} == zeshel ]; then
     echo "build train index for ${mt_set} ... "
     rm $EMBEDDING_DIR/embeddings.*
     python src/taco/driver/build_index.py \
