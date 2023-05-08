@@ -48,7 +48,7 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=6
+epoch=4
 lr=5e-6
 p_len=160
 log_step=100
@@ -58,7 +58,7 @@ infer_bsz=4096
 #mt_method="naive"
 rands_ratio=0.5
 n_gpu=8
-num_hn_iters=6
+num_hn_iters=4
 epoch_per_hn=1
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
@@ -86,7 +86,7 @@ do
     else
       delimiter=","
     fi
-    if [ ${mt_set} == zeshel ]; then
+    if [ ${mt_set} == zeshel ]; then``
       max_q_len=132
     elif [ ${mt_set} == fever ]; then
       max_q_len=68

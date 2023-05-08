@@ -4,6 +4,7 @@ import pickle
 from contextlib import nullcontext
 from typing import Dict, List, Union
 import logging
+import gc
 
 import faiss
 import numpy as np
@@ -112,9 +113,12 @@ class Retriever:
             )
         encoded = []
         lookup_indices = []
+        idx = 0
+        prev_idx = 0
         for (batch_ids, batch) in tqdm(dataloader,
                                        disable=self.args.local_process_index > 0):
             lookup_indices.extend(batch_ids)
+            idx += len(batch_ids)
             with amp.autocast() if self.args.fp16 else nullcontext():
                 with torch.no_grad():
                     for k, v in batch.items():
@@ -123,15 +127,27 @@ class Retriever:
                     encoded.append(
                         model_output.p_reps.cpu().detach().numpy().astype(
                             'float32'))
-        print('contatenate encoded embeddings ... ')
-        encoded = np.concatenate(encoded)
-        os.makedirs(self.args.output_dir, exist_ok=True)
-        print('pickle dumping embeddings ...')
-        with open(os.path.join(self.args.output_dir,
-                               "embeddings.corpus.rank.{}".format(
-                                   self.args.process_index)), 'wb') as f:
-            pickle.dump((encoded, lookup_indices), f, protocol=4)
-
+                    if len(
+                            lookup_indices) >= self.args.max_inmem_docs // \
+                            self.args.world_size:
+                        encoded = np.concatenate(encoded)
+                        with open(os.path.join(self.args.output_dir,
+                                               "embeddings.corpus.rank.{}.{}-{}".format(
+                                                   self.args.process_index,
+                                                   prev_idx, idx)), 'wb') as f:
+                            pickle.dump((encoded, lookup_indices), f,
+                                        protocol=4)
+                        encoded = []
+                        lookup_indices = []
+                        prev_idx = idx
+                        gc.collect()
+        if len(lookup_indices) > 0:
+            encoded = np.concatenate(encoded)
+            with open(os.path.join(self.args.output_dir,
+                                   "embeddings.corpus.rank.{}.{}-{}".format(
+                                       self.args.process_index, prev_idx,
+                                       idx)), 'wb') as f:
+                pickle.dump((encoded, lookup_indices), f, protocol=4)
         del encoded
         del lookup_indices
 
@@ -276,7 +292,7 @@ class Retriever:
 
         return return_dict
 
-    def retrieve(self, query_dataset: Union[Dataset,IterableDataset]):
+    def retrieve(self, query_dataset: Union[Dataset, IterableDataset]):
         topk = self.args.topk
         self.query_embedding_inference(query_dataset)
         self.model.cpu()
@@ -291,7 +307,7 @@ class Retriever:
             dist.barrier()
         return results
 
-    def split_retrieve(self, query_dataset: Union[Dataset,IterableDataset]):
+    def split_retrieve(self, query_dataset: Union[Dataset, IterableDataset]):
         topk = self.args.topk
         self.query_embedding_inference(query_dataset)
         del self.model

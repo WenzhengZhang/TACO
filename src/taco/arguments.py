@@ -396,3 +396,5 @@ class DenseEncodingArguments(DenseTrainingArguments):
     })
     task_names: str = field(default='NQ,TQA,HOPO,WOW,TREX,FEVER,ZSRE,AIDA',
                             metadata={"help": "task names"})
+    max_inmem_docs: int = field(default=3000000, metadata={
+        "help": "max number of docs to keep in memory"})
