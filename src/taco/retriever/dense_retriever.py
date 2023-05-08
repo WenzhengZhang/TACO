@@ -38,7 +38,7 @@ class Retriever:
         self.corpus_dataset = corpus_dataset
         self.args = args
         # force device and distributed setup init explicitly
-        # self.args._setup_devices
+        self.args._setup_devices
         self.doc_lookup = []
         self.query_lookup = []
         self.model = model.to(self.args.device)
