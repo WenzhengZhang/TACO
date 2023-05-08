@@ -127,20 +127,20 @@ class Retriever:
                     encoded.append(
                         model_output.p_reps.cpu().detach().numpy().astype(
                             'float32'))
-                    if len(
-                            lookup_indices) >= self.args.max_inmem_docs // \
-                            self.args.world_size:
-                        encoded = np.concatenate(encoded)
-                        with open(os.path.join(self.args.output_dir,
-                                               "embeddings.corpus.rank.{}.{}-{}".format(
-                                                   self.args.process_index,
-                                                   prev_idx, idx)), 'wb') as f:
-                            pickle.dump((encoded, lookup_indices), f,
-                                        protocol=4)
-                        encoded = []
-                        lookup_indices = []
-                        prev_idx = idx
-                        gc.collect()
+            if len(
+                    lookup_indices) >= self.args.max_inmem_docs // \
+                    self.args.world_size:
+                encoded = np.concatenate(encoded)
+                with open(os.path.join(self.args.output_dir,
+                                       "embeddings.corpus.rank.{}.{}-{}".format(
+                                           self.args.process_index,
+                                           prev_idx, idx)), 'wb') as f:
+                    pickle.dump((encoded, lookup_indices), f,
+                                protocol=4)
+                encoded = []
+                lookup_indices = []
+                prev_idx = idx
+                gc.collect()
         if len(lookup_indices) > 0:
             encoded = np.concatenate(encoded)
             with open(os.path.join(self.args.output_dir,
