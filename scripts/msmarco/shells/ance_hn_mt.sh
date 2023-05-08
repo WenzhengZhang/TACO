@@ -319,7 +319,7 @@ do
       --q_max_len 32  \
       --p_max_len $p_len  \
       --fp16  \
-      --dataloader_num_workers 32 \
+      --dataloader_num_workers 16 \
       --cache_dir $CACHE_DIR
 
     echo "retrieve dev data of ${mt_set} for hn_iter ${hn_iter} ... "
