@@ -199,8 +199,8 @@ do
             --cache_dir $CACHE_DIR
         fi
 
-      echo "removing training trec file of ${mt_set}"
-      rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
+#      echo "removing training trec file of ${mt_set}"
+#      rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
       echo "splitting ${mt_set} hn file"
       if [ ${mt_set} == zeshel ]; then
         mv $PROCESSED_DIR/train_all.jsonl  $PROCESSED_DIR/train.jsonl
@@ -307,7 +307,7 @@ do
       train_corpus_path=$RAW_DIR/psg_corpus.tsv
       test_corpus_path=$RAW_DIR/psg_corpus.tsv
     fi
-    if [ $hn_iter != 0 ] || [ ${mt_set} == nq ]; then
+    if [ $hn_iter != 0 ] || [ ${mt_set} == msmarco ]; then
       echo "build dev index for hn_iter ${hn_iter} ... "
       rm $EMBEDDING_DIR/embeddings.*
       python src/taco/driver/build_index.py \
