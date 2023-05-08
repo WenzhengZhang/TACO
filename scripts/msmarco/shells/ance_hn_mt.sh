@@ -268,6 +268,8 @@ do
         --add_query_task_prefix True \
         --resume_from_checkpoint $resume \
         --data_cache_dir $CACHE_DIR
+    echo "clean cache dir ... "
+    rm -rf $CACHE_DIR/json/*
   fi
   ckpt_dir=$(ls -td $MODEL_DIR/checkpoint-* | head -1)
   cp $ckpt_dir/pytorch_model.bin $MODEL_DIR/pytorch_model.bin
@@ -449,7 +451,9 @@ do
             --topk 110 \
             --task_name ${mt_set^^} \
             --add_query_task_prefix True \
-            --cache_dir $CACHE_DIR
+            --cache_dir $CACHE_DIR \
+            --split_retrieve \
+            --use_gpu
       fi
     fi
 
