@@ -269,6 +269,8 @@ do
         --resume_from_checkpoint $resume \
         --data_cache_dir $CACHE_DIR
   fi
+  ckpt_dir=$(ls -td $MODEL_DIR/checkpoint-* | head -1)
+  cp $ckpt_dir/pytorch_model.bin $MODEL_DIR/pytorch_model.bin
 
   for mt_set in ${mt_sets[@]}
   do
@@ -303,13 +305,12 @@ do
       train_corpus_path=$RAW_DIR/psg_corpus.tsv
       test_corpus_path=$RAW_DIR/psg_corpus.tsv
     fi
-    ckpt_dir=$(ls -td $MODEL_DIR/checkpoint-* | head -1)
 
     echo "build dev index for hn_iter ${hn_iter} ... "
     rm $EMBEDDING_DIR/embeddings.*
     python src/taco/driver/build_index.py \
       --output_dir $EMBEDDING_DIR/ \
-      --model_name_or_path $ckpt_dir \
+      --model_name_or_path $MODEL_DIR \
       --per_device_eval_batch_size $infer_bsz  \
       --corpus_path $dev_corpus_path  \
       --encoder_only False  \
@@ -328,7 +329,7 @@ do
 
     python -m src.taco.driver.retrieve  \
         --output_dir $EMBEDDING_DIR/ \
-        --model_name_or_path $ckpt_dir \
+        --model_name_or_path $MODEL_DIR \
         --per_device_eval_batch_size $infer_bsz  \
         --query_path $RAW_DIR/dev.query.txt  \
         --encoder_only False  \
@@ -369,7 +370,7 @@ do
         rm $EMBEDDING_DIR/embeddings.*
         python src/taco/driver/build_index.py \
             --output_dir $EMBEDDING_DIR/ \
-            --model_name_or_path $ckpt_dir \
+            --model_name_or_path $MODEL_DIR \
             --per_device_eval_batch_size $infer_bsz  \
             --corpus_path ${test_corpus_path}  \
             --encoder_only False  \
@@ -384,7 +385,7 @@ do
       echo "retrieve test ... "
       python -m src.taco.driver.retrieve  \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $ckpt_dir \
+          --model_name_or_path $MODEL_DIR \
           --per_device_eval_batch_size $infer_bsz  \
           --query_path $RAW_DIR/test.query.txt  \
           --encoder_only False  \
@@ -409,7 +410,7 @@ do
         rm $EMBEDDING_DIR/embeddings.*
         python src/taco/driver/build_index.py \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $ckpt_dir \
+          --model_name_or_path $MODEL_DIR \
           --per_device_eval_batch_size $infer_bsz  \
           --corpus_path $train_corpus_path  \
           --encoder_only False  \
@@ -435,7 +436,7 @@ do
 #      mkdir -p $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}
       python -m src.taco.driver.retrieve  \
           --output_dir $EMBEDDING_DIR/ \
-          --model_name_or_path $ckpt_dir \
+          --model_name_or_path $MODEL_DIR \
           --per_device_eval_batch_size $infer_bsz  \
           --query_path ${train_query_path}  \
           --encoder_only False  \
