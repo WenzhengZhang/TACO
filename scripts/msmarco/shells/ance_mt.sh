@@ -65,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=4; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=3; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -146,7 +146,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 0 ]; then
+    if [ $hn_iter != 3 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
@@ -215,7 +215,7 @@ do
     fi
   done
 
-  if [ $hn_iter != -1 ]; then
+  if [ $hn_iter != 3 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
