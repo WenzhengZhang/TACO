@@ -79,3 +79,13 @@ $DATA_DIR
 - Day4: reranker and extractive reader part
 - Day5: generative retrieval (CorpusBrain, Genre)
 - Day6: discrete dense retrieval
+
+# Install Faiss-gpu
+For A100 CUDA-11, we need to install faiss-gpu via conda instead of pip
+
+```
+# check your cudatoolkit
+conda search cudatoolkit
+# install faiss-gpu 
+conda install -c pytorch faiss-gpu cudatoolkit=11.3.1
+```
