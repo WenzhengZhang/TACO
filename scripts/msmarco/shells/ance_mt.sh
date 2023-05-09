@@ -15,8 +15,8 @@ EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"$mt_method
 RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"$mt_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 #PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"$mt_method
-if [ -d $MODEL_DIR ]; then
-  echo "$MODEL_DIR is not empty"
+if [ -d $MODEL_DIR/hn_iter_0 ]; then
+  echo "$MODEL_DIR/hn_iter_0 is not empty"
 else
   echo "get initial model"
   mkdir -p $MODEL_DIR
@@ -215,7 +215,7 @@ do
     fi
   done
 
-  if [ $hn_iter != 0 ]; then
+  if [ $hn_iter != -1 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
