@@ -63,7 +63,11 @@ class ModelArguments:
         default=0, metadata={
             "help": "Iteration of hard negative generation, used to decay learning rate"}
     )
-
+    total_iter_num: Optional[int] = field(
+        default=None, metadata={
+            "help": "total num of ance iterations"
+        }
+    )
     decay_rate: Optional[float] = field(
         default=0.6, metadata={"help": "Decay learning rate"}
     )
