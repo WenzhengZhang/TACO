@@ -31,7 +31,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 SAVE_STEP=10000
 EVAL_STEP=300
 
-eval_delay=0
+eval_delay=10
 epoch=20
 lr=5e-6
 p_len=160
@@ -79,7 +79,9 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --save_total_limit 2 \
     --load_best_model_at_end True \
     --metric_for_best_model loss \
-    --data_cache_dir $CACHE_DIR
+    --data_cache_dir $CACHE_DIR \
+    --total_iter_num 8 \
+    --iter_num 0
 
 
 
@@ -127,8 +129,8 @@ echo "get preprocessed data of msmarco for ance training"
 #  python src/taco/driver/build_index.py  \
 
 
-export RANDOM=42
-echo "random down_sample train queries ... "
+#export RANDOM=42
+#echo "random down_sample train queries ... "
 #shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
 echo "retrieving train ..."
 python -m src.taco.driver.retrieve  \

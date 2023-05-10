@@ -93,7 +93,7 @@ with open(args.negative_file) as nf:
                 shard_id += 1
                 counter = 0
                 pbar.set_description(
-                    f"saving to {OUTPUT_TEXT_FILE_NAME}-{shard_id:02d}.jsonl")
+                    f"saving to {OUTPUT_ENCODED_FILE_NAME}-{shard_id:02d}.jsonl")
 
 # cleanup any stragglers
 if encoded_data_file is not None:
