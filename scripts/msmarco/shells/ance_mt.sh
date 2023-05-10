@@ -49,7 +49,7 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=1
+epoch=3
 lr=5e-6
 p_len=160
 log_step=100
@@ -59,13 +59,13 @@ infer_bsz=4096
 #mt_method="naive"
 rands_ratio=0.5
 n_gpu=8
-num_hn_iters=6
-epoch_per_hn=1
+num_hn_iters=8
+epoch_per_hn=3
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=4; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -146,7 +146,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 4 ]; then
+    if [ $hn_iter != 0 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
@@ -215,7 +215,7 @@ do
     fi
   done
 
-  if [ $hn_iter != 3 ]; then
+  if [ $hn_iter != 0 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
