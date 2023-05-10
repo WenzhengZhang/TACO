@@ -157,7 +157,7 @@ python src/taco/dataset/build_hn.py  \
     --tokenizer_name $PLM_DIR/t5-base-scaled  \
     --hn_file $RESULT_DIR/msmarco/train.trec \
     --qrels $RAW_DIR/train.qrel.tsv \
-    --queries $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt \
+    --queries $RAW_DIR/train.query.txt \
     --collection $RAW_DIR/psg_corpus.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
