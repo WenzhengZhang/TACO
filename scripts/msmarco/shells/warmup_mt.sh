@@ -170,7 +170,7 @@ do
     train_corpus_path=$RAW_DIR/psg_corpus.tsv
     test_corpus_path=$RAW_DIR/psg_corpus.tsv
   fi
-  if [ ${mt_set} == nq ]; then
+  if [ ${mt_set} == msmarco ]; then
     echo "building dev index for ${mt_set} "
   #  python src/taco/driver/build_index.py  \
     rm $EMBEDDING_DIR/embeddings.*
@@ -193,97 +193,101 @@ do
         mkdir -p $RESULT_DIR/${mt_set}
     fi
 
-#    python -m src.taco.driver.retrieve  \
-#        --output_dir $EMBEDDING_DIR/ \
-#        --model_name_or_path $MODEL_DIR \
-#        --per_device_eval_batch_size $infer_bsz  \
-#        --query_path $RAW_DIR/dev.query.txt  \
-#        --encoder_only False  \
-#        --query_template "<text>"  \
-#        --query_column_names  id,text \
-#        --q_max_len $max_q_len  \
-#        --fp16  \
-#        --trec_save_path $RESULT_DIR/${mt_set}/dev.trec \
-#        --dataloader_num_workers 0 \
-#        --cache_dir $CACHE_DIR
-#
-#    $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/dev.trec > $RESULT_DIR/${mt_set}/dev_results.txt
-#    if [ ${mt_set} == nq ]; then
-#      echo "page-level scoring ..."
-#      python scripts/kilt/convert_trec_to_provenance.py  \
-#        --trec_file $RESULT_DIR/${mt_set}/dev.trec  \
-#        --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
-#        --passage_collection $DATA_DIR/kilt/corpus/psgs_w100.tsv  \
-#        --output_provenance_file $RESULT_DIR/${mt_set}/provenance.json
-#      echo "get prediction file ... "
-#      python scripts/kilt/convert_to_evaluation.py \
-#        --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
-#        --provenance_file $RESULT_DIR/${mt_set}/provenance.json \
-#        --output_evaluation_file $RESULT_DIR/${mt_set}/preds.json
-#      echo "get scores ... "
-#      python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${mt_set}/preds.json $RAW_DIR/${mt_set}-dev-kilt.jsonl \
-#        --ks 1,20,100 \
-#        --results_file $RESULT_DIR/${mt_set}/page-level-results.json
-#    elif [ ${mt_set} == zeshel ]; then
-#      echo "build val hard negatives for zeshel"
-#  #    mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
-#      python src/taco/dataset/build_hn.py  \
-#          --tokenizer_name $PLM_DIR/t5-base-scaled  \
-#          --hn_file $RESULT_DIR/${mt_set}/dev.trec \
-#          --qrels $RAW_DIR/dev.qrel.tsv \
-#          --queries $RAW_DIR/dev.query.txt \
-#          --collection $dev_corpus_path \
-#          --save_to $ANCE_PROCESSED_DIR \
-#          --template "Title: <title> Text: <text>" \
-#          --add_rand_negs \
-#          --num_hards 32 \
-#          --num_rands 32 \
-#          --split dev \
-#          --seed 42 \
-#          --use_doc_id_map \
-#          --truncate $p_len \
-#          --cache_dir $CACHE_DIR
-#
-#    fi
-#
-#    if [ ${mt_set} == zeshel ] || [ ${mt_set} == fever ]; then
-#      echo "evaluate test data ... "
-#      if [ ${mt_set} == zeshel ]; then
-#        echo "build test index for zeshel"
-#        rm $EMBEDDING_DIR/embeddings.*
-#        python src/taco/driver/build_index.py \
-#            --output_dir $EMBEDDING_DIR/ \
-#            --model_name_or_path $MODEL_DIR \
-#            --per_device_eval_batch_size $infer_bsz  \
-#            --corpus_path ${test_corpus_path}  \
-#            --encoder_only False  \
-#            --doc_template "Title: <title> Text: <text>"  \
-#            --doc_column_names id,title,text \
-#            --q_max_len $max_q_len  \
-#            --p_max_len $p_len  \
-#            --fp16  \
-#            --dataloader_num_workers 32 \
-#            --cache_dir $CACHE_DIR
-#      fi
-#      echo "retrieve test ... "
-#      python -m src.taco.driver.retrieve  \
-#          --output_dir $EMBEDDING_DIR/ \
-#          --model_name_or_path $MODEL_DIR \
-#          --per_device_eval_batch_size $infer_bsz  \
-#          --query_path $RAW_DIR/test.query.txt  \
-#          --encoder_only False  \
-#          --query_template "<text>"  \
-#          --query_column_names  id,text \
-#          --q_max_len $max_q_len  \
-#          --fp16  \
-#          --trec_save_path $RESULT_DIR/${mt_set}/test.trec \
-#          --dataloader_num_workers 0 \
-#          --cache_dir $CACHE_DIR
-#
-#      echo "evaluate test trec ... "
-#      $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/${mt_set}/test.trec > $RESULT_DIR/${mt_set}/test_results.txt
-#
-#    fi
+    python -m src.taco.driver.retrieve  \
+        --output_dir $EMBEDDING_DIR/ \
+        --model_name_or_path $MODEL_DIR \
+        --per_device_eval_batch_size $infer_bsz  \
+        --query_path $RAW_DIR/dev.query.txt  \
+        --encoder_only False  \
+        --query_template "<text>"  \
+        --query_column_names  id,text \
+        --q_max_len $max_q_len  \
+        --fp16  \
+        --trec_save_path $RESULT_DIR/${mt_set}/dev.trec \
+        --dataloader_num_workers 0 \
+        --cache_dir $CACHE_DIR \
+        --split_retrieve \
+        --use_gpu
+
+    $EVAL_DIR/trec_eval -c -mRprec -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/${mt_set}/dev.trec > $RESULT_DIR/${mt_set}/dev_results.txt
+    if [ ${mt_set} == nq ]; then
+      echo "page-level scoring ..."
+      python scripts/kilt/convert_trec_to_provenance.py  \
+        --trec_file $RESULT_DIR/${mt_set}/dev.trec  \
+        --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
+        --passage_collection $DATA_DIR/kilt/corpus/psgs_w100.tsv  \
+        --output_provenance_file $RESULT_DIR/${mt_set}/provenance.json
+      echo "get prediction file ... "
+      python scripts/kilt/convert_to_evaluation.py \
+        --kilt_queries_file $RAW_DIR/${mt_set}-dev-kilt.jsonl  \
+        --provenance_file $RESULT_DIR/${mt_set}/provenance.json \
+        --output_evaluation_file $RESULT_DIR/${mt_set}/preds.json
+      echo "get scores ... "
+      python scripts/kilt/evaluate_kilt.py $RESULT_DIR/${mt_set}/preds.json $RAW_DIR/${mt_set}-dev-kilt.jsonl \
+        --ks 1,20,100 \
+        --results_file $RESULT_DIR/${mt_set}/page-level-results.json
+    elif [ ${mt_set} == zeshel ]; then
+      echo "build val hard negatives for zeshel"
+  #    mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
+      python src/taco/dataset/build_hn.py  \
+          --tokenizer_name $PLM_DIR/t5-base-scaled  \
+          --hn_file $RESULT_DIR/${mt_set}/dev.trec \
+          --qrels $RAW_DIR/dev.qrel.tsv \
+          --queries $RAW_DIR/dev.query.txt \
+          --collection $dev_corpus_path \
+          --save_to $ANCE_PROCESSED_DIR \
+          --template "Title: <title> Text: <text>" \
+          --add_rand_negs \
+          --num_hards 32 \
+          --num_rands 32 \
+          --split dev \
+          --seed 42 \
+          --use_doc_id_map \
+          --truncate $p_len \
+          --cache_dir $CACHE_DIR
+
+    fi
+
+    if [ ${mt_set} == zeshel ] || [ ${mt_set} == fever ]; then
+      echo "evaluate test data ... "
+      if [ ${mt_set} == zeshel ]; then
+        echo "build test index for zeshel"
+        rm $EMBEDDING_DIR/embeddings.*
+        python src/taco/driver/build_index.py \
+            --output_dir $EMBEDDING_DIR/ \
+            --model_name_or_path $MODEL_DIR \
+            --per_device_eval_batch_size $infer_bsz  \
+            --corpus_path ${test_corpus_path}  \
+            --encoder_only False  \
+            --doc_template "Title: <title> Text: <text>"  \
+            --doc_column_names id,title,text \
+            --q_max_len $max_q_len  \
+            --p_max_len $p_len  \
+            --fp16  \
+            --dataloader_num_workers 32 \
+            --cache_dir $CACHE_DIR
+      fi
+      echo "retrieve test ... "
+      python -m src.taco.driver.retrieve  \
+          --output_dir $EMBEDDING_DIR/ \
+          --model_name_or_path $MODEL_DIR \
+          --per_device_eval_batch_size $infer_bsz  \
+          --query_path $RAW_DIR/test.query.txt  \
+          --encoder_only False  \
+          --query_template "<text>"  \
+          --query_column_names  id,text \
+          --q_max_len $max_q_len  \
+          --fp16  \
+          --trec_save_path $RESULT_DIR/${mt_set}/test.trec \
+          --dataloader_num_workers 0 \
+          --cache_dir $CACHE_DIR \
+          --split_retrieve \
+          --use_gpu
+
+      echo "evaluate test trec ... "
+      $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/test.qrel.trec $RESULT_DIR/${mt_set}/test.trec > $RESULT_DIR/${mt_set}/test_results.txt
+
+    fi
     echo "get preprocessed data of ${mt_set} for ance training"
     if [ ${mt_set} == zeshel ]; then
       echo "build train index for zeshel ... "
@@ -303,15 +307,15 @@ do
         --cache_dir $CACHE_DIR
     fi
     echo "retrieving train ..."
-    if [ ${mt_set} == msmarco ]; then
-      echo "random down_sample msmarco"
-      export RANDOM=42
-      echo "random down_sample train queries ... "
-      shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
-      train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
-    else
-      train_query_path=$RAW_DIR/train.query.txt
-    fi
+#    if [ ${mt_set} == msmarco ]; then
+#      echo "random down_sample msmarco"
+#      export RANDOM=42
+#      echo "random down_sample train queries ... "
+#      shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/train.query.txt
+#      train_query_path=$ANCE_PROCESSED_DIR/train.query.txt
+#    else
+    train_query_path=$RAW_DIR/train.query.txt
+#    fi
     python -m src.taco.driver.retrieve  \
         --output_dir $EMBEDDING_DIR/ \
         --model_name_or_path $MODEL_DIR \
@@ -325,7 +329,9 @@ do
         --trec_save_path $RESULT_DIR/${mt_set}/train.trec \
         --dataloader_num_workers 0 \
         --topk 100 \
-        --cache_dir $CACHE_DIR
+        --cache_dir $CACHE_DIR \
+        --split_retrieve \
+        --use_gpu
 
     echo "building hard negatives of ance first episode for ${mt_set} ..."
   #  mkdir -p $ANCE_PROCESSED_DIR/${mt_set}/hn_iter_0
