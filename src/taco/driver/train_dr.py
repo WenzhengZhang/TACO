@@ -125,7 +125,10 @@ def main():
             max_q_len=data_args.q_max_len,
             multi_label=training_args.multi_label
         ),
-        callbacks=[tb_callback]
+        callbacks=[tb_callback],
+        data_args=data_args,
+        model_args=model_args,
+        model_config=config
     )
     train_dataset.trainer = trainer
 

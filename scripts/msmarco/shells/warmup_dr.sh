@@ -81,7 +81,8 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
     --metric_for_best_model loss \
     --data_cache_dir $CACHE_DIR \
     --total_iter_num 8 \
-    --iter_num 0
+    --iter_num 0 \
+    --resume_from_checkpoint $MODEL_DIR/checkpoint-34408
 
 
 

@@ -3,6 +3,7 @@ import os
 import sys
 from itertools import repeat
 from typing import Any, Dict, List, Optional, Tuple, Union
+from ..modeling import DenseModel
 import pickle
 import numpy as np
 import torch.nn.functional as F
@@ -84,8 +85,12 @@ found it actually won't return eval_loss, I should modify the prediction_step
 
 
 class DenseTrainer(Trainer):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, data_args=None, model_args=None, model_config=None,
+                 *args, **kwargs):
         super(DenseTrainer, self).__init__(*args, **kwargs)
+        self.data_args = data_args
+        self.model_args = model_args
+        self.model_config = model_config
         self._dist_loss_scale_factor = dist.get_world_size() if self.args.negatives_x_device else 1
 
     def _save(self, output_dir: Optional[str] = None):
