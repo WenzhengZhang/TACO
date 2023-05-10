@@ -231,65 +231,65 @@ do
     fi
   done
 
-  if [ $hn_iter != 0 ]; then
-    echo "start hn training for for episode-${hn_iter} ..."
+#  if [ $hn_iter != -1 ]; then
+  echo "start hn training for for episode-${hn_iter} ..."
 
-    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
-        --output_dir $MODEL_DIR/hn_iter_${new_hn_iter}  \
-        --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter}  \
-        --do_train  \
-        --eval_delay $eval_delay \
-        --save_strategy epoch \
-        --evaluation_strategy epoch \
-        --logging_steps $log_step \
-        --mt_train_paths $mt_train_paths  \
-        --mt_eval_paths $mt_eval_paths \
-        --fp16  \
-        --per_device_train_batch_size $bsz  \
-        --mt_train_n_passages $mt_n_passages \
-        --learning_rate $lr  \
-        --q_max_lens $max_q_lens  \
-        --p_max_lens $max_p_lens \
-        --task_names $task_names \
-        --num_train_epochs $epoch_per_hn  \
-        --epochs_per_hn $epoch_per_hn \
-        --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
-        --negatives_x_device True \
-        --remove_unused_columns False \
-        --overwrite_output_dir True \
-        --dataloader_num_workers 0 \
-        --multi_label False \
-        --in_batch_negatives True \
-        --pooling first \
-        --positive_passage_no_shuffle True \
-        --negative_passage_no_shuffle True \
-        --add_rand_negs False \
-        --encoder_only False \
-        --save_total_limit 2 \
-        --load_best_model_at_end False \
-        --metric_for_best_model loss \
-        --up_sample True \
-        --weight_method $mt_method \
-        --select_all True \
-        --multi_mix_temp 4.0 \
-        --log_gnorm False \
-        --beta_taco 0.999 \
-        --tau_taco 2 \
-        --beta_gn 1.5 \
-        --beta_cgd 0.25 \
-        --tau_cgd 100 \
-        --norm_grad True \
-        --norm_ipt True \
-        --hard_negative_mining False \
-        --rands_ratio $rands_ratio \
-        --add_query_task_prefix True \
-        --data_cache_dir $CACHE_DIR \
-        --total_iter_num $num_hn_iters \
-        --iter_num $hn_iter
+  torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
+      --output_dir $MODEL_DIR/hn_iter_${new_hn_iter}  \
+      --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter}  \
+      --do_train  \
+      --eval_delay $eval_delay \
+      --save_strategy epoch \
+      --evaluation_strategy epoch \
+      --logging_steps $log_step \
+      --mt_train_paths $mt_train_paths  \
+      --mt_eval_paths $mt_eval_paths \
+      --fp16  \
+      --per_device_train_batch_size $bsz  \
+      --mt_train_n_passages $mt_n_passages \
+      --learning_rate $lr  \
+      --q_max_lens $max_q_lens  \
+      --p_max_lens $max_p_lens \
+      --task_names $task_names \
+      --num_train_epochs $epoch_per_hn  \
+      --epochs_per_hn $epoch_per_hn \
+      --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
+      --negatives_x_device True \
+      --remove_unused_columns False \
+      --overwrite_output_dir True \
+      --dataloader_num_workers 0 \
+      --multi_label False \
+      --in_batch_negatives True \
+      --pooling first \
+      --positive_passage_no_shuffle True \
+      --negative_passage_no_shuffle True \
+      --add_rand_negs False \
+      --encoder_only False \
+      --save_total_limit 2 \
+      --load_best_model_at_end False \
+      --metric_for_best_model loss \
+      --up_sample True \
+      --weight_method $mt_method \
+      --select_all True \
+      --multi_mix_temp 4.0 \
+      --log_gnorm False \
+      --beta_taco 0.999 \
+      --tau_taco 2 \
+      --beta_gn 1.5 \
+      --beta_cgd 0.25 \
+      --tau_cgd 100 \
+      --norm_grad True \
+      --norm_ipt True \
+      --hard_negative_mining False \
+      --rands_ratio $rands_ratio \
+      --add_query_task_prefix True \
+      --data_cache_dir $CACHE_DIR \
+      --total_iter_num $num_hn_iters \
+      --iter_num $hn_iter
 #        --resume_from_checkpoint $resume \
-    echo "clean cache dir ... "
-    rm -rf $CACHE_DIR/json/*
-  fi
+  echo "clean cache dir ... "
+  rm -rf $CACHE_DIR/json/*
+#  fi
 
   for mt_set in ${mt_sets[@]}
   do

@@ -383,7 +383,7 @@ do
         --split train \
         --seed 42 \
         --cache_dir $CACHE_DIR \
-        --shuffle_negatives 
+        --shuffle_negatives
   #        --use_doc_id_map \
   #        --add_rand_negs \
     fi
