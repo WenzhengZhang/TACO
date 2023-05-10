@@ -106,6 +106,7 @@ class MTDenseTrainer(DenseTrainer):
         # self.data_args = data_args
         # self.model_args = model_args
         # self.model_config = model_config
+        data_args = self.data_args
         self.task_names = self.args.task_names.split(',')
         self.num_tasks = len(self.task_names)
         self.n_passages = get_task_hps(data_args.mt_train_n_passages,
