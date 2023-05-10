@@ -39,7 +39,7 @@ log_step=100
 n_passages=8
 rands_ratio=0.5
 num_hn_iters=6
-epoch_per_hn=3
+epoch_per_hn=1
 lr=5e-6
 dr=0.8
 n_gpu=8
@@ -91,7 +91,7 @@ do
           --tokenizer_name $PLM_DIR/t5-base-scaled  \
           --hn_file $RESULT_DIR/msmarco/hn_iter_${hn_iter}/train.trec \
           --qrels $RAW_DIR/train.qrel.tsv \
-          --queries $PROCESSED_DIR/hn_iter_${hn_iter}/train.query.txt \
+          --queries $RAW_DIR/train.query.txt  \
           --collection $RAW_DIR/psg_corpus.tsv \
           --save_to $PROCESSED_DIR/hn_iter_${hn_iter} \
           --template "Title: <title> Text: <text>" \
@@ -99,8 +99,8 @@ do
           --num_rands 32 \
           --split train \
           --seed ${hn_iter} \
-          --truncate $p_len \
-          --cache_dir $CACHE_DIR
+          --cache_dir $CACHE_DIR \
+          --shuffle_negatives
 
       echo "removing training trec file of msmarco"
       rm $RESULT_DIR/msmarco/hn_iter_${hn_iter}/train.trec
@@ -135,7 +135,6 @@ do
         --q_max_len $max_q_len  \
         --p_max_len $p_len \
         --num_train_epochs $epoch_per_hn  \
-        --epochs_per_hn $epoch_per_hn \
         --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
         --negatives_x_device True \
         --remove_unused_columns False \

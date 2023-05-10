@@ -47,7 +47,7 @@ if __name__ == '__main__':
     parser.add_argument('--save_to', required=True)
     parser.add_argument('--template', type=str, default=None)
 
-    parser.add_argument('--truncate', type=int, default=128)
+    parser.add_argument('--truncate', type=int, default=512)
     parser.add_argument('--num_hards', type=int, default=64)
     parser.add_argument('--num_rands', type=int, default=64)
     parser.add_argument('--depth', type=int, default=200)

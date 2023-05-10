@@ -174,3 +174,6 @@ print(d)
 a = {'1': 1, '2': 2, '3': 3, '4': 4}
 b = random.sample(a.items(), 2)
 print(b)
+a = "this is <m> a test </m>"
+print(tokenizer.tokenize(a))
+

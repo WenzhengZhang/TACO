@@ -133,23 +133,23 @@ export PYTHONPATH=.
 ##export RANDOM=42
 ##echo "random down_sample train queries ... "
 ##shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
-echo "retrieving train ..."
-python -m src.taco.driver.retrieve  \
-    --output_dir $EMBEDDING_DIR/ \
-    --model_name_or_path $MODEL_DIR \
-    --per_device_eval_batch_size $infer_bsz  \
-    --query_path $RAW_DIR/train.query.txt  \
-    --encoder_only False  \
-    --query_template "<text>"  \
-    --query_column_names  id,text \
-    --q_max_len $max_q_len  \
-    --fp16  \
-    --trec_save_path $RESULT_DIR/msmarco/train.trec \
-    --dataloader_num_workers 32 \
-    --topk 100 \
-    --cache_dir $CACHE_DIR \
-    --split_retrieve \
-    --use_gpu
+#echo "retrieving train ..."
+#python -m src.taco.driver.retrieve  \
+#    --output_dir $EMBEDDING_DIR/ \
+#    --model_name_or_path $MODEL_DIR \
+#    --per_device_eval_batch_size $infer_bsz  \
+#    --query_path $RAW_DIR/train.query.txt  \
+#    --encoder_only False  \
+#    --query_template "<text>"  \
+#    --query_column_names  id,text \
+#    --q_max_len $max_q_len  \
+#    --fp16  \
+#    --trec_save_path $RESULT_DIR/msmarco/train.trec \
+#    --dataloader_num_workers 32 \
+#    --topk 100 \
+#    --cache_dir $CACHE_DIR \
+#    --split_retrieve \
+#    --use_gpu
 
 echo "building hard negatives of ance first episode for msmarco ..."
 mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
@@ -165,13 +165,18 @@ python src/taco/dataset/build_hn.py  \
     --num_rands 32 \
     --split train \
     --seed 42 \
-    --truncate $p_len \
-    --cache_dir $CACHE_DIR
+    --cache_dir $CACHE_DIR \
+    --shard_hn \
+    --shuffle_negatives
 
 #echo "removing train msmarco trec files"
 #rm $RESULT_DIR/msmarco/train.trec
 
 echo "splitting msmarco train hn file"
+cd $ANCE_PROCESSED_DIR/hn_iter_0
+cat train.*.jsonl > train_all.jsonl
+rm train.*.jsonl
+
 
 tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/val.jsonl
 head -n -500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
@@ -179,8 +184,8 @@ rm $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl
 
 #echo "remove checkpoints"
 #rm $MODEL_DIR/checkpoint-*
-echo "copy warmed up model to ance iter 0 model folder for msmarco"
-cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
+#echo "copy warmed up model to ance iter 0 model folder for msmarco"
+#cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings for msmarco"
 rm $EMBEDDING_DIR/embeddings.corpus.rank.*
 
