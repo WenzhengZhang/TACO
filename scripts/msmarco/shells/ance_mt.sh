@@ -49,7 +49,7 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=3
+epoch=1
 lr=5e-6
 p_len=160
 log_step=100
@@ -60,7 +60,7 @@ infer_bsz=4096
 rands_ratio=0.5
 n_gpu=8
 num_hn_iters=8
-epoch_per_hn=3
+epoch_per_hn=1
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
@@ -118,11 +118,12 @@ do
       train_corpus_path=$RAW_DIR/psg_corpus.tsv
       test_corpus_path=$RAW_DIR/psg_corpus.tsv
     fi
-    if [ ${mt_set} == msmarco ]; then
-      train_query_path=$PROCESSED_DIR/train.query.txt
-    else
-      train_query_path=$RAW_DIR/train.query.txt
-    fi
+#    if [ ${mt_set} == msmarco ]; then
+#      train_query_path=$PROCESSED_DIR/train.query.txt
+#    else
+#      train_query_path=$RAW_DIR/train.query.txt
+#    fi
+    train_query_path=$RAW_DIR/train.query.txt
     max_p_len=160
     n_passage=8
 
@@ -162,11 +163,11 @@ do
             --split dev \
             --seed 42 \
             --use_doc_id_map \
-            --truncate $p_len \
             --cache_dir $CACHE_DIR
+#            --shuffle_negatives \
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
-      if [ ${mt_set} != zeshel ]; then
+      if [ ${mt_set} == fever ]; then
         python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \
             --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
@@ -179,10 +180,10 @@ do
             --num_rands 32 \
             --split train \
             --seed ${hn_iter} \
-            --truncate $p_len \
             --cache_dir $CACHE_DIR
+#            --shuffle_negatives \
 #            --use_doc_id_map \
-      else
+      elif [ ${mt_set} == zeshel ]; then
         python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \
             --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
@@ -196,7 +197,22 @@ do
             --split train \
             --seed ${hn_iter} \
             --use_doc_id_map \
-            --truncate $p_len \
+            --cache_dir $CACHE_DIR
+#            --shuffle_negatives
+        else
+          python src/taco/dataset/build_hn.py  \
+            --tokenizer_name $PLM_DIR/t5-base-scaled  \
+            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+            --qrels $RAW_DIR/train.qrel.tsv \
+            --queries $train_query_path \
+            --collection $train_corpus_path \
+            --save_to $PROCESSED_DIR \
+            --template "Title: <title> Text: <text>" \
+            --num_hards 32 \
+            --num_rands 32 \
+            --split train \
+            --seed ${hn_iter} \
+            --shuffle_negatives \
             --cache_dir $CACHE_DIR
         fi
 
