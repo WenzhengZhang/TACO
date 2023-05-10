@@ -647,6 +647,22 @@ class DenseTrainer(Trainer):
 
         return TrainOutput(self.state.global_step, train_loss, metrics)
 
+    def _load_best_model(self):
+        logger.info(
+            f"Loading best model from {self.state.best_model_checkpoint} "
+            f"(score: {self.state.best_metric}).")
+        best_model_path = self.state.best_model_checkpoint
+        logger.info(f"loading best checkpoint path {best_model_path}")
+        self.model = DenseModel.build(
+            model_args=self.model_args,
+            data_args=self.data_args,
+            train_args=self.args,
+            config=self.model_config,
+            cache_dir=self.model_args.cache_dir,
+            resume_path=best_model_path
+        )
+
+    # TODO: modify this function to support resume instead of rely on train_mt
     def _load_from_checkpoint(self, resume_from_checkpoint, model=None):
         logger.info(f"Loading model from {resume_from_checkpoint}.")
 
