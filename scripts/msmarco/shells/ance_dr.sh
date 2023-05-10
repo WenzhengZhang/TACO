@@ -48,7 +48,7 @@ infer_bsz=4096
 steps=250
 n_gpu=8
 iter_num=-1
-for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=1; hn_iter<$num_hn_iters; hn_iter++))
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
@@ -66,6 +66,7 @@ do
       echo "retrieving train ..."
       export RANDOM=$hn_iter
       echo "random down_sample ... "
+      mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}/
       shuf -n 100000 $RAW_DIR/train.query.txt > $PROCESSED_DIR/hn_iter_${hn_iter}/train.query.txt
       mkdir -p $RESULT_DIR/msmarco/hn_iter_${hn_iter}
       python -m src.taco.driver.retrieve  \
