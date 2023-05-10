@@ -87,7 +87,7 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_d
 
 echo "building dev index for msmarco"
 #  python src/taco/driver/build_index.py  \
-torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_index.py \
+python src/taco/driver/build_index.py \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
