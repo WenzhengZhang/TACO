@@ -124,8 +124,7 @@ else
         --queries $RAW_DIR/train.query.txt  \
         --collection $RAW_DIR/psg_corpus.tsv  \
         --save_to $PROCESSED_DIR/  \
-        --template "Title: <title> Text: <text>" \
-        --add_rand_negs
+        --template "Title: <title> Text: <text>"
 
     echo "Concatenating output shards...";
 
