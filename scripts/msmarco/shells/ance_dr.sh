@@ -34,7 +34,7 @@ export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
 eval_delay=0
 epoch=6
 p_len=160
-max_q_len=128
+max_q_len=32
 log_step=100
 n_passages=8
 rands_ratio=0.5
@@ -43,7 +43,7 @@ epoch_per_hn=3
 lr=5e-6
 dr=0.8
 n_gpu=8
-bsz=24
+bsz=32
 infer_bsz=4096
 steps=250
 n_gpu=8
@@ -64,16 +64,16 @@ do
       fi
     else
       echo "retrieving train ..."
-      export RANDOM=$hn_iter
-      echo "random down_sample ... "
-      mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}/
-      shuf -n 100000 $RAW_DIR/train.query.txt > $PROCESSED_DIR/hn_iter_${hn_iter}/train.query.txt
+#      export RANDOM=$hn_iter
+#      echo "random down_sample ... "
+#      mkdir -p $PROCESSED_DIR/hn_iter_${hn_iter}/
+#      shuf -n 100000 $RAW_DIR/train.query.txt > $PROCESSED_DIR/hn_iter_${hn_iter}/train.query.txt
       mkdir -p $RESULT_DIR/msmarco/hn_iter_${hn_iter}
       python -m src.taco.driver.retrieve  \
           --output_dir $EMBEDDING_DIR/ \
           --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter} \
           --per_device_eval_batch_size $infer_bsz  \
-          --query_path $PROCESSED_DIR/hn_iter_${hn_iter}/train.query.txt  \
+          --query_path $RAW_DIR/train.query.txt  \
           --encoder_only False  \
           --query_template "<text>"  \
           --query_column_names  id,text \

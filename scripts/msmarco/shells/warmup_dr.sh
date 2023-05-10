@@ -40,7 +40,7 @@ bsz=16
 n_passages=8
 infer_bsz=4096
 n_gpu=8
-max_q_len=128
+max_q_len=32
 
 cd $CODE_DIR
 export PYTHONPATH=.
