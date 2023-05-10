@@ -39,7 +39,7 @@ log_step=100
 n_passages=8
 rands_ratio=0.5
 num_hn_iters=6
-epoch_per_hn=1
+epoch_per_hn=3
 lr=5e-6
 dr=0.8
 n_gpu=8
@@ -48,7 +48,7 @@ infer_bsz=4096
 steps=250
 n_gpu=8
 iter_num=-1
-for ((hn_iter=1; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
 do
     echo "Iteration $hn_iter"
     let new_hn_iter=$hn_iter+1
