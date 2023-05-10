@@ -4,16 +4,16 @@ CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/msmarco/warmup_dr/"
+MODEL_DIR=$TACO_DIR"/model/warmup_dr/msmarco/"
 DATA_DIR=$TACO_DIR"/data/msmarco/"
 RAW_DIR=$DATA_DIR"/raw/"
 PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
-LOG_DIR=$TACO_DIR"/logs/msmarco/warmup_dr/"
+LOG_DIR=$TACO_DIR"/logs/warmup_dr/msmarco/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_dr/"
 RESULT_DIR=$TACO_DIR"/results/warmup_dr/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 ANCE_PROCESSED_DIR=$DATA_DIR"/processed/ance_dr/"
-ANCE_MODEL_DIR=$TACO_DIR"/model/msmarco/ance_dr/"
+ANCE_MODEL_DIR=$TACO_DIR"/model/ance_dr/msmarco/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
@@ -32,13 +32,13 @@ SAVE_STEP=10000
 EVAL_STEP=300
 
 eval_delay=0
-epoch=10
-lr=1e-5
+epoch=20
+lr=5e-6
 p_len=160
 log_step=100
 bsz=16
-n_passages=4
-infer_bsz=1024
+n_passages=8
+infer_bsz=4096
 n_gpu=8
 max_q_len=128
 
@@ -96,7 +96,8 @@ torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/build_i
     --q_max_len $max_q_len  \
     --p_max_len $p_len  \
     --fp16  \
-    --dataloader_num_workers 0
+    --dataloader_num_workers 32 \
+    --cache_dir $CACHE_DIR
 
 echo "retrieve dev data of msmarco ... "
 if [ ! -d "$RESULT_DIR/msmarco" ]; then
@@ -114,7 +115,11 @@ python -m src.taco.driver.retrieve  \
     --q_max_len $max_q_len  \
     --fp16  \
     --trec_save_path $RESULT_DIR/msmarco/dev.trec \
-    --dataloader_num_workers 0
+    --dataloader_num_workers 32 \
+    --topk 100 \
+    --cache_dir $CACHE_DIR \
+    --split_retrieve \
+    --use_gpu
 
 $EVAL_DIR/trec_eval -c -mrecip_rank.10 -mrecall.64,100 $RAW_DIR/dev.qrel.trec $RESULT_DIR/msmarco/dev.trec > $RESULT_DIR/msmarco/dev_results.txt
 
@@ -124,21 +129,24 @@ echo "get preprocessed data of msmarco for ance training"
 
 export RANDOM=42
 echo "random down_sample train queries ... "
-shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
+#shuf -n 100000 $RAW_DIR/train.query.txt > $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt
 echo "retrieving train ..."
 python -m src.taco.driver.retrieve  \
     --output_dir $EMBEDDING_DIR/ \
     --model_name_or_path $MODEL_DIR \
     --per_device_eval_batch_size $infer_bsz  \
-    --query_path $ANCE_PROCESSED_DIR/hn_iter_0/train.query.txt  \
+    --query_path $RAW_DIR/train.query.txt  \
     --encoder_only False  \
     --query_template "<text>"  \
     --query_column_names  id,text \
     --q_max_len $max_q_len  \
     --fp16  \
     --trec_save_path $RESULT_DIR/msmarco/train.trec \
-    --dataloader_num_workers 0 \
-    --topk 100
+    --dataloader_num_workers 32 \
+    --topk 100 \
+    --cache_dir $CACHE_DIR \
+    --split_retrieve \
+    --use_gpu
 
 echo "building hard negatives of ance first episode for msmarco ..."
 mkdir -p $ANCE_PROCESSED_DIR/hn_iter_0
@@ -150,11 +158,12 @@ python src/taco/dataset/build_hn.py  \
     --collection $RAW_DIR/psg_corpus.tsv \
     --save_to $ANCE_PROCESSED_DIR/hn_iter_0 \
     --template "Title: <title> Text: <text>" \
-    --num_hards 64 \
-    --num_rands 64 \
+    --num_hards 32 \
+    --num_rands 32 \
     --split train \
     --seed 42 \
-    --truncate $p_len
+    --truncate $p_len \
+    --cache_dir $CACHE_DIR
 
 echo "removing train msmarco trec files"
 rm $RESULT_DIR/msmarco/train.trec
@@ -165,8 +174,8 @@ tail -n 500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/
 head -n -500 $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl > $ANCE_PROCESSED_DIR/hn_iter_0/train.jsonl
 rm $ANCE_PROCESSED_DIR/hn_iter_0/train_all.jsonl
 
-echo "remove checkpoints"
-rm $MODEL_DIR/checkpoint-*
+#echo "remove checkpoints"
+#rm $MODEL_DIR/checkpoint-*
 echo "copy warmed up model to ance iter 0 model folder for msmarco"
 cp -r $MODEL_DIR  $ANCE_MODEL_DIR/hn_iter_0/
 echo "deleting warmed up embeddings for msmarco"
