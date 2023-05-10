@@ -428,15 +428,16 @@ do
           --cache_dir $CACHE_DIR
       fi
       echo "retrieve train trec"
-      if [ ${mt_set} == msmarco ]; then
-        echo "random down_sample msmarco"
-        export RANDOM=${new_hn_iter}
-        echo "random down_sample train queries ... "
-        shuf -n 100000 $RAW_DIR/train.query.txt > $PROCESSED_DIR/train.query.txt
-        train_query_path=$PROCESSED_DIR/train.query.txt
-      else
-        train_query_path=$RAW_DIR/train.query.txt
-      fi
+#      if [ ${mt_set} == msmarco ]; then
+#        echo "random down_sample msmarco"
+#        export RANDOM=${new_hn_iter}
+#        echo "random down_sample train queries ... "
+#        shuf -n 100000 $RAW_DIR/train.query.txt > $PROCESSED_DIR/train.query.txt
+#        train_query_path=$PROCESSED_DIR/train.query.txt
+#      else
+#        train_query_path=$RAW_DIR/train.query.txt
+#      fi
+      train_query_path=$RAW_DIR/train.query.txt
       echo "retrieving train ${mt_set} ..."
 #      mkdir -p $RESULT_DIR/${mt_set}/hn_iter_${new_hn_iter}
       python -m src.taco.driver.retrieve  \
