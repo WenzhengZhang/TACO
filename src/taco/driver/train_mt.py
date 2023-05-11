@@ -39,8 +39,7 @@ def main():
     # Lr decay while iterative training with hard negative
     if not training_args.hard_negative_mining:
         if model_args.total_iter_num is not None:
-            decay_rate = training_args.learning_rate / (
-                    model_args.total_iter_num + 1)
+            decay_rate = training_args.learning_rate/model_args.total_iter_num
         else:
             decay_rate = model_args.decay_rate
         training_args.learning_rate -= model_args.iter_num * decay_rate
