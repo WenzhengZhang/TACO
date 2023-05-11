@@ -7,9 +7,12 @@ import re
 import json
 from datasets import load_dataset
 from taco.utils import get_idx
+import sys
+
+csv.field_size_limit(sys.maxsize)
 
 
-def process_qrel(input_dir, processed_dir, data_name, split):
+def process_qrel(input_dir, processed_dir, data_name, split, doc_id_map):
     qrel_path = os.path.join(input_dir, f"{data_name}/qrels/{split}.tsv")
     processed_qrel_path = os.path.join(processed_dir,
                                        f"{split}.qrel.tsv")
@@ -21,9 +24,10 @@ def process_qrel(input_dir, processed_dir, data_name, split):
         for i in range(len(qrel_df)):
             score = qrel_df.loc[i, 'score']
             q_id = qrel_df.loc[i, 'query-id']
-            d_id = qrel_df.loc[i, 'corpus-id']
+            d_id = qrel_df.loc[i, 'corpus-id'].replace("\"", "")
+            doc_id = doc_id_map[d_id]
             # assert (qrel_df.loc[i, 'score'] == 1)
-            tsv_w.writerow([q_id, 0, d_id, score])
+            tsv_w.writerow([q_id, 0, doc_id, score])
             q_ids.append(str(q_id))
     # Test Qrels TREC
     with open(qrel_trec_path, 'w') as fout:
@@ -55,6 +59,7 @@ def process_query(input_dir, processed_dir, data_name, q_ids, split):
 def process_corpus(input_dir, processed_dir, data_name):
     # Corpus
     doc_count = 0
+    doc_id_map = {}
     input_corpus_path = os.path.join(input_dir,
                                      f'{data_name}/corpus.jsonl')
     output_corpus_path = os.path.join(processed_dir,
@@ -63,18 +68,21 @@ def process_corpus(input_dir, processed_dir, data_name):
         with open(output_corpus_path, 'w',
                   newline='') as fout:
             tsv_w = csv.writer(fout, delimiter='\t')
-            for line in fin:
+            for i, line in enumerate(fin):
                 item = json.loads(line)
                 _id = item['_id']
+                _id = _id.replace("\"", "")
+                doc_id_map[_id] = i
                 title = item['title']
                 if dataset_name == 'robust04':
                     text = re.sub(r"[^A-Za-z0-9=(),!?\'\`]", " ", item['text'])
                     text = " ".join(text.split())
                 else:
                     text = item['text'].replace("\n", " ")
-                tsv_w.writerow([_id, title, text])
+                tsv_w.writerow([i, title, text])
                 doc_count += 1
     print(f'doc count {doc_count}')
+    return doc_id_map
 
 
 # TODO: filter nan lines
@@ -108,26 +116,26 @@ if __name__ == '__main__':
     args = parser.parse_args()
     dataset_name = args.dataset_name
     print('process corpus ... ')
-    process_corpus(args.input_dir, args.processed_dir, dataset_name)
+    did_map = process_corpus(args.input_dir, args.processed_dir, dataset_name)
     if not args.not_process_test:
         print('process qrels test')
         test_qids = process_qrel(args.input_dir, args.processed_dir,
                                  dataset_name,
-                                 'test')
+                                 'test', did_map)
         print('process queries test ... ')
         process_query(args.input_dir, args.processed_dir, dataset_name,
                       test_qids, 'test')
     if args.process_train:
         print('process qrels train ... ')
         train_qids = process_qrel(args.input_dir, args.processed_dir,
-                                  dataset_name, 'train')
+                                  dataset_name, 'train', did_map)
         print('process queries train ... ')
         process_query(args.input_dir, args.processed_dir, dataset_name,
                       train_qids, 'train')
     if args.process_dev:
         print('process qrels dev ... ')
         dev_qids = process_qrel(args.input_dir, args.processed_dir,
-                                dataset_name, 'dev')
+                                dataset_name, 'dev', did_map)
         print('process queries dev ... ')
         process_query(args.input_dir, args.processed_dir, dataset_name,
                       dev_qids, 'dev')

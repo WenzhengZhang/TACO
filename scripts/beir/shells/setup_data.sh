@@ -19,11 +19,12 @@ mkdir -p $EVAL_DIR
 mkdir -p $ORIG_DIR
 cd $ORIG_DIR
 #beir_sets=(trec-covid nfcorpus fiqa arguana webis-touche2020 quora scidocs scifact nq hotpotqa dbpedia-entity fever climate-fever)
-beir_sets=(nq-train)
+#beir_sets=(nq-train)
+beir_sets=(fever)
 #has_train_sets=(nfcorpus hotpotqa fiqa fever scifact)
-has_train_sets=(nq-train)
-has_dev_sets=(nfcorpus hotpotqa fiqa quora dbpedia-entity fever)
-has_train_dev_sets=(nfcorpus hotpotqa fiqa fever)
+has_train_sets=(fever)
+has_dev_sets=(fever)
+has_train_dev_sets=(fever)
 
 for dataset in ${beir_sets[@]}
 do

@@ -34,74 +34,74 @@ else
 
 fi
 
-#### download and process data
-#cd $ORIG_DIR
-#
-#### if you want titles of msmarco documents from these authors
-#wget --no-check-certificate https://rocketqa.bj.bcebos.com/corpus/marco.tar.gz
-#tar -zxf marco.tar.gz
-#rm -rf marco.tar.gz
-#mv marco rocketQA-marco
-#
-#### move title and passages from RocketQA to different folder
-#cp rocketQA-marco/para.txt $ORIG_DIR
-#cp rocketQA-marco/para.title.txt $ORIG_DIR
-#cp rocketQA-marco/train.query.txt $ORIG_DIR
-#
-#### work in this folder for now
-#cd $ORIG_DIR
-#
-#if [ ! -f "$ORIG_DIR/collection.tsv" ]; then
-#    wget https://msmarco.blob.core.windows.net/msmarcoranking/collectionandqueries.tar.gz
-#    tar -zxvf collectionandqueries.tar.gz
-#    rm collectionandqueries.tar.gz
-#
-#fi
-#
-#if [ ! -f "$ORIG_DIR/triples.train.small.tsv" ]; then
-#    wget https://msmarco.blob.core.windows.net/msmarcoranking/triples.train.small.tar.gz
-#    tar -zxvf triples.train.small.tar.gz
-#    rm triples.train.small.tar.gz*
-#
-#fi
-#
-#
-#if [ ! -f "$ORIG_DIR/qrels.train.tsv" ]; then
-#    wget https://msmarco.blob.core.windows.net/msmarcoranking/qrels.train.tsv -O qrels.train.tsv
-#
-#fi
-#
-#
-#if [ ! -f "$ORIG_DIR/qidpidtriples.train.full.2.tsv" ]; then
-#    wget https://msmarco.blob.core.windows.net/msmarcoranking/qidpidtriples.train.full.2.tsv.gz
-#    gunzip qidpidtriples.train.full.2.tsv.gz
-#
-#fi
-#
-#
-#### if you want to join titles with the msmarco passages
-#if [ -f "$ORIG_DIR/collection_with_title.tsv" ]; then
-#    echo "$ORIG_DIR/collection_with_title.tsv exists.";
-#else
-#    echo "Joining para.txt and para.title.txt";
-#    join  -t "$(echo -en '\t')"  -e '' -a 1  -o 1.1 2.2 1.2  <(sort -k1,1 para.txt) <(sort -k1,1 para.title.txt) | sort -k1,1 -n > collection_with_title.tsv
-#
-#fi
-#
-#if [ -f "$ORIG_DIR/train.negatives.tsv" ]; then
-#    echo "$ORIG_DIR/train.negatives.tsv exists.";
-#else
-#    echo "processing train.negatives.tsv -- negative documents for every query";
-#    awk -v RS='\r\n' '$1==last {printf ",%s",$3; next} NR>1 {print "";} {last=$1; printf "%s\t%s",$1,$3;} END{print "";}' qidpidtriples.train.full.2.tsv > train.negatives.tsv
-#
-#fi
-#echo "get raw data from original folder"
-#mv $ORIG_DIR/train.negatives.tsv $RAW_DIR
-#mv $ORIG_DIR/qrels.train.tsv $RAW_DIR/train.qrel.tsv
-#mv $ORIG_DIR/train.query.txt $RAW_DIR
-#mv $ORIG_DIR/collection_with_title.tsv $RAW_DIR/psg_corpus.tsv
-#mv $ORIG_DIR/queries.dev.small.tsv $RAW_DIR/dev.query.txt
-#mv $ORIG_DIR/qrels.dev.small.tsv $RAW_DIR/dev.qrel.tsv
+### download and process data
+cd $ORIG_DIR
+
+### if you want titles of msmarco documents from these authors
+wget --no-check-certificate https://rocketqa.bj.bcebos.com/corpus/marco.tar.gz
+tar -zxf marco.tar.gz
+rm -rf marco.tar.gz
+mv marco rocketQA-marco
+
+### move title and passages from RocketQA to different folder
+cp rocketQA-marco/para.txt $ORIG_DIR
+cp rocketQA-marco/para.title.txt $ORIG_DIR
+cp rocketQA-marco/train.query.txt $ORIG_DIR
+
+### work in this folder for now
+cd $ORIG_DIR
+
+if [ ! -f "$ORIG_DIR/collection.tsv" ]; then
+    wget https://msmarco.blob.core.windows.net/msmarcoranking/collectionandqueries.tar.gz
+    tar -zxvf collectionandqueries.tar.gz
+    rm collectionandqueries.tar.gz
+
+fi
+
+if [ ! -f "$ORIG_DIR/triples.train.small.tsv" ]; then
+    wget https://msmarco.blob.core.windows.net/msmarcoranking/triples.train.small.tar.gz
+    tar -zxvf triples.train.small.tar.gz
+    rm triples.train.small.tar.gz*
+
+fi
+
+
+if [ ! -f "$ORIG_DIR/qrels.train.tsv" ]; then
+    wget https://msmarco.blob.core.windows.net/msmarcoranking/qrels.train.tsv -O qrels.train.tsv
+
+fi
+
+
+if [ ! -f "$ORIG_DIR/qidpidtriples.train.full.2.tsv" ]; then
+    wget https://msmarco.blob.core.windows.net/msmarcoranking/qidpidtriples.train.full.2.tsv.gz
+    gunzip qidpidtriples.train.full.2.tsv.gz
+
+fi
+
+
+### if you want to join titles with the msmarco passages
+if [ -f "$ORIG_DIR/collection_with_title.tsv" ]; then
+    echo "$ORIG_DIR/collection_with_title.tsv exists.";
+else
+    echo "Joining para.txt and para.title.txt";
+    join  -t "$(echo -en '\t')"  -e '' -a 1  -o 1.1 2.2 1.2  <(sort -k1,1 para.txt) <(sort -k1,1 para.title.txt) | sort -k1,1 -n > collection_with_title.tsv
+
+fi
+
+if [ -f "$ORIG_DIR/train.negatives.tsv" ]; then
+    echo "$ORIG_DIR/train.negatives.tsv exists.";
+else
+    echo "processing train.negatives.tsv -- negative documents for every query";
+    awk -v RS='\r\n' '$1==last {printf ",%s",$3; next} NR>1 {print "";} {last=$1; printf "%s\t%s",$1,$3;} END{print "";}' qidpidtriples.train.full.2.tsv > train.negatives.tsv
+
+fi
+echo "get raw data from original folder"
+mv $ORIG_DIR/train.negatives.tsv $RAW_DIR
+mv $ORIG_DIR/qrels.train.tsv $RAW_DIR/train.qrel.tsv
+mv $ORIG_DIR/train.query.txt $RAW_DIR
+mv $ORIG_DIR/collection_with_title.tsv $RAW_DIR/psg_corpus.tsv
+mv $ORIG_DIR/queries.dev.small.tsv $RAW_DIR/dev.query.txt
+mv $ORIG_DIR/qrels.dev.small.tsv $RAW_DIR/dev.qrel.tsv
 
 
 cd $CODE_DIR
