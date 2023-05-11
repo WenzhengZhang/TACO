@@ -5,16 +5,16 @@ CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"$mt_method
+MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"taco
 WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
 DATA_DIR=$TACO_DIR"/data/"
 #RAW_DIR=$DATA_DIR"/raw/"
 #PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
-LOG_DIR=$TACO_DIR"/logs/ance_mt/mt_msmarco/"$mt_method
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"$mt_method
-RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"$mt_method
+LOG_DIR=$TACO_DIR"/logs/ance_mt/mt_msmarco/"taco
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"taco
+RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"taco
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-#PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"$mt_method
+#PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"taco
 if [ -d $MODEL_DIR/hn_iter_0 ]; then
   echo "$MODEL_DIR/hn_iter_0 is not empty"
 else
@@ -65,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=5; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=4; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -279,7 +279,7 @@ do
         --load_best_model_at_end False \
         --metric_for_best_model loss \
         --up_sample True \
-        --weight_method $mt_method \
+        --weight_method taco \
         --select_all True \
         --multi_mix_temp 4.0 \
         --log_gnorm False \
