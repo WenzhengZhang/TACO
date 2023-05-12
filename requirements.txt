@@ -1,0 +1,12 @@
+# this is a default list of requirements just to get the lib/ code to work as expected. 
+# Each folder in projects/ may have additional requirements
+transformers==4.26.0
+sentencepiece==0.1.97
+datasets==2.12.0
+tensorboard==2.11.2
+tqdm==4.62.1
+scipy==1.10.0
+scikit-learn==1.2.2
+spacy==3.5.1
+pyserini==0.20.0
+tokenizers==0.13.2
