@@ -5,30 +5,29 @@ CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"taco
-#WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
-WARM_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/hn_iter_2/"
+MODEL_DIR=$TACO_DIR"/model/ance_tasks/mt_msmarco/"$mt_method
+WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
 DATA_DIR=$TACO_DIR"/data/"
 #RAW_DIR=$DATA_DIR"/raw/"
 #PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
-LOG_DIR=$TACO_DIR"/logs/ance_mt/mt_msmarco/"taco
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"taco
-RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"taco
+LOG_DIR=$TACO_DIR"/logs/ance_tasks/mt_msmarco/"$mt_method
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_tasks/mt_msmarco/"$mt_method
+RESULT_DIR=$TACO_DIR"/results/ance_tasks/mt_msmarco/"$mt_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-#PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"taco
-if [ -d $MODEL_DIR/hn_iter_2 ]; then
-  echo "$MODEL_DIR/hn_iter_2 is not empty"
+#PROCESSED_DIR=$DATA_DIR"ance_tasks/mt_msmarco/processed/"$mt_method
+if [ -d $MODEL_DIR/hn_iter_0 ]; then
+  echo "$MODEL_DIR/hn_iter_0 is not empty"
 else
   echo "get initial model"
   mkdir -p $MODEL_DIR
-  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_2
+  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_0
 fi
 #if [ -d $PROCESSED_DIR ]; then
 #  echo "$PROCESSED_DIR is not empty"
 #else
 #  echo "get initial processed data"
-#  mkdir -p $DATA_DIR"ance_mt/mt_msmarco/processed/"
-#  cp -r $DATA_DIR"ance_mt/mt_msmarco/processed/naive/"  $PROCESSED_DIR
+#  mkdir -p $DATA_DIR"ance_tasks/mt_msmarco/processed/"
+#  cp -r $DATA_DIR"ance_tasks/mt_msmarco/processed/naive/"  $PROCESSED_DIR
 #fi
 
 mkdir -p $TACO_DIR
@@ -66,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=2; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -92,18 +91,18 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
-      PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/taco/
+      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
-      PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/taco/
+      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
-      PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/taco/
-      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
+      PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/
+      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     fi
     if [ ${mt_set} == zeshel ]; then
@@ -128,7 +127,7 @@ do
     max_p_len=160
     n_passage=8
 
-    if [ $hn_iter == 2 ]; then
+    if [ $hn_iter == 0 ]; then
       echo "initial processed data should be obtained after warmup training"
       mkdir -p $PREFIX_PROCESSED
       if [ -d $PROCESSED_DIR ]; then
@@ -148,7 +147,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 2 ]; then
+    if [ $hn_iter != 0 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
@@ -270,7 +269,7 @@ do
       --load_best_model_at_end False \
       --metric_for_best_model loss \
       --up_sample True \
-      --weight_method taco \
+      --weight_method $mt_method \
       --select_all True \
       --multi_mix_temp 4.0 \
       --log_gnorm False \
@@ -303,13 +302,13 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/taco/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/taco/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
-      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/taco/hn_iter_${new_hn_iter}/
+      PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
     fi
     mkdir -p $PROCESSED_DIR
     if [ ${mt_set} == zeshel ]; then
