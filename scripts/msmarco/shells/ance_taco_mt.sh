@@ -270,7 +270,7 @@ do
       --load_best_model_at_end False \
       --metric_for_best_model loss \
       --up_sample True \
-      --weight_method taco \
+      --weight_method pcg \
       --select_all True \
       --multi_mix_temp 4.0 \
       --log_gnorm False \
