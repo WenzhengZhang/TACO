@@ -65,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=3; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=4; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1

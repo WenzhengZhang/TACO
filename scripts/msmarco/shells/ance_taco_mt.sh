@@ -128,7 +128,7 @@ do
     max_p_len=160
     n_passage=8
 
-    if [ $hn_iter == 2 ]; then
+    if [ $hn_iter == 5 ]; then
       echo "initial processed data should be obtained after warmup training"
       mkdir -p $PREFIX_PROCESSED
       if [ -d $PROCESSED_DIR ]; then
@@ -148,7 +148,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 2 ]; then
+    if [ $hn_iter != 5 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
