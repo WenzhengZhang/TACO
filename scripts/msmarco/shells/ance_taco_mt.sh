@@ -7,7 +7,7 @@ TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
 MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"taco
 #WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
-WARM_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/hn_iter_2/"
+WARM_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/hn_iter_5/"
 DATA_DIR=$TACO_DIR"/data/"
 #RAW_DIR=$DATA_DIR"/raw/"
 #PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
@@ -16,12 +16,12 @@ EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"taco
 RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"taco
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 #PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"taco
-if [ -d $MODEL_DIR/hn_iter_2 ]; then
-  echo "$MODEL_DIR/hn_iter_2 is not empty"
+if [ -d $MODEL_DIR/hn_iter_5 ]; then
+  echo "$MODEL_DIR/hn_iter_5 is not empty"
 else
   echo "get initial model"
   mkdir -p $MODEL_DIR
-  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_2
+  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_5
 fi
 #if [ -d $PROCESSED_DIR ]; then
 #  echo "$PROCESSED_DIR is not empty"
@@ -66,7 +66,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=2; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=5; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -92,18 +92,18 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
+      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_5
       PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/taco/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
+      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_5
       PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/taco/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
       PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/taco/
-      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_2
+      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_5
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     fi
     if [ ${mt_set} == zeshel ]; then
