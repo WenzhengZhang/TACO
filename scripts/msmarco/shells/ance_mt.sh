@@ -65,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=6; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -163,8 +163,8 @@ do
             --split dev \
             --seed 42 \
             --use_doc_id_map \
-            --cache_dir $CACHE_DIR
-#            --shuffle_negatives \
+            --cache_dir $CACHE_DIR \
+            --shuffle_negatives
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
       if [ ${mt_set} == fever ]; then
@@ -180,8 +180,8 @@ do
             --num_rands 32 \
             --split train \
             --seed ${hn_iter} \
-            --cache_dir $CACHE_DIR
-#            --shuffle_negatives \
+            --cache_dir $CACHE_DIR \
+            --shuffle_negatives \
 #            --use_doc_id_map \
       elif [ ${mt_set} == zeshel ]; then
         python src/taco/dataset/build_hn.py  \
@@ -197,8 +197,8 @@ do
             --split train \
             --seed ${hn_iter} \
             --use_doc_id_map \
-            --cache_dir $CACHE_DIR
-#            --shuffle_negatives
+            --cache_dir $CACHE_DIR \
+            --shuffle_negatives
         else
           python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \

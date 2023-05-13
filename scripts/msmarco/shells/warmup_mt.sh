@@ -170,7 +170,7 @@ do
     train_corpus_path=$RAW_DIR/psg_corpus.tsv
     test_corpus_path=$RAW_DIR/psg_corpus.tsv
   fi
-  if [ ${mt_set} == msmarco ] || [ ${mt_set} == nq ]; then
+  if [ ${mt_set} == fever ] || [ ${mt_set} == zeshel ]; then
     echo "building dev index for ${mt_set} "
   #  python src/taco/driver/build_index.py  \
     rm $EMBEDDING_DIR/embeddings.*
@@ -243,8 +243,8 @@ do
           --split dev \
           --seed 42 \
           --use_doc_id_map \
-          --cache_dir $CACHE_DIR
-#          --shuffle_negatives \
+          --cache_dir $CACHE_DIR \
+          --shuffle_negatives
 
     fi
 
@@ -349,8 +349,8 @@ do
         --split train \
         --seed 42 \
         --cache_dir $CACHE_DIR \
-        --use_doc_id_map
-#        --shuffle_negatives \
+        --use_doc_id_map \
+        --shuffle_negatives
   #        --add_rand_negs \
     elif [ ${mt_set} == fever ]; then
        python src/taco/dataset/build_hn.py  \
@@ -365,8 +365,8 @@ do
         --num_rands 32 \
         --split train \
         --seed 42 \
-        --cache_dir $CACHE_DIR
-#        --shuffle_negatives \
+        --cache_dir $CACHE_DIR \
+        --shuffle_negatives
   #        --use_doc_id_map \
   #        --add_rand_negs \
     else
