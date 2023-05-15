@@ -143,8 +143,8 @@ do
             --split dev \
             --seed 42 \
             --use_doc_id_map \
-            --cache_dir $CACHE_DIR \
-            --shuffle_negatives 
+            --cache_dir $CACHE_DIR
+#            --shuffle_negatives
       fi
       echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
       if [ ${mt_set} == zeshel ]; then
@@ -161,8 +161,24 @@ do
             --split train \
             --seed ${hn_iter} \
             --use_doc_id_map \
-            --cache_dir $CACHE_DIR \
-            --shuffle_negatives
+            --cache_dir $CACHE_DIR
+#            --shuffle_negatives
+      elif [ ${mt_set} == fever ]; then
+        python src/taco/dataset/build_hn.py  \
+            --tokenizer_name $PLM_DIR/t5-base-scaled  \
+            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+            --qrels $RAW_DIR/train.qrel.tsv \
+            --queries $train_query_path \
+            --collection $train_corpus_path \
+            --save_to $PROCESSED_DIR \
+            --template "Title: <title> Text: <text>" \
+            --num_hards 32 \
+            --num_rands 32 \
+            --split train \
+            --seed ${hn_iter} \
+            --cache_dir $CACHE_DIR
+#            --shuffle_negatives
+#             --use_doc_id_map \
       else
           python src/taco/dataset/build_hn.py  \
             --tokenizer_name $PLM_DIR/t5-base-scaled  \
