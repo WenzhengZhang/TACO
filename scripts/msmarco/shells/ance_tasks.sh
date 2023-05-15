@@ -52,7 +52,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=0; hn_iter<$num_hn_iters; hn_iter++))
+for ((hn_iter=0; hn_iter<6; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -70,11 +70,6 @@ do
       echo "get initial model"
       mkdir -p $MODEL_DIR/${mt_set}/
       cp -r $WARM_MODEL_DIR  $MODEL_DIR/${mt_set}/hn_iter_0
-    fi
-    if [ ${mt_set} == ${mt_sets[0]} ]; then
-      delimiter=""
-    else
-      delimiter=","
     fi
     if [ ${mt_set} == zeshel ]; then
       max_q_len=132
@@ -127,8 +122,8 @@ do
         cp -r $NAIVE_INIT_DIR $PROCESSED_DIR
       fi
     fi
-    train_path="$delimiter"$PROCESSED_DIR/train.jsonl
-    val_path="$delimiter"$PROCESSED_DIR/val.jsonl
+    train_path=$PROCESSED_DIR/train.jsonl
+    val_path=$PROCESSED_DIR/val.jsonl
 
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
