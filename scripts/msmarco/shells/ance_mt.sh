@@ -15,12 +15,12 @@ EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"$mt_method
 RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"$mt_method
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 #PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"$mt_method
-if [ -d $MODEL_DIR/hn_iter_0 ]; then
-  echo "$MODEL_DIR/hn_iter_0 is not empty"
+if [ -d $MODEL_DIR/hn_iter_3 ]; then
+  echo "$MODEL_DIR/hn_iter_3 is not empty"
 else
   echo "get initial model"
   mkdir -p $MODEL_DIR
-  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_0
+  cp -r $WARM_MODEL_DIR  $MODEL_DIR/hn_iter_3
 fi
 #if [ -d $PROCESSED_DIR ]; then
 #  echo "$PROCESSED_DIR is not empty"
@@ -65,7 +65,7 @@ let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=4; hn_iter<6; hn_iter++))
+for ((hn_iter=3; hn_iter<6; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -91,18 +91,18 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_3
       PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_3
       PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
       PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/${mt_method}/
-      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_3
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     fi
     if [ ${mt_set} == zeshel ]; then
@@ -145,151 +145,152 @@ do
     max_p_lens+="$delimiter"$max_p_len
     task_names+="$delimiter"${mt_set^^}
     mt_n_passages+="$delimiter"$n_passages
-
-    echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 0 ]; then
-      if [ ${mt_set} == zeshel ]; then
-        echo " build val hard negatives for zeshel"
-        python src/taco/dataset/build_hn.py  \
-            --tokenizer_name $PLM_DIR/t5-base-scaled  \
-            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/dev.trec \
-            --qrels $RAW_DIR/dev.qrel.tsv \
-            --queries $RAW_DIR/dev.query.txt \
-            --collection $dev_corpus_path \
-            --save_to $PROCESSED_DIR \
-            --template "Title: <title> Text: <text>" \
-            --num_hards 32 \
-            --num_rands 32 \
-            --split dev \
-            --seed 42 \
-            --use_doc_id_map \
-            --cache_dir $CACHE_DIR \
-            --shuffle_negatives
-      fi
-      echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
-      if [ ${mt_set} == fever ]; then
-        python src/taco/dataset/build_hn.py  \
-            --tokenizer_name $PLM_DIR/t5-base-scaled  \
-            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
-            --qrels $RAW_DIR/train.qrel.tsv \
-            --queries $train_query_path \
-            --collection $train_corpus_path \
-            --save_to $PROCESSED_DIR \
-            --template "Title: <title> Text: <text>" \
-            --num_hards 32 \
-            --num_rands 32 \
-            --split train \
-            --seed ${hn_iter} \
-            --cache_dir $CACHE_DIR \
-            --shuffle_negatives \
-#            --use_doc_id_map \
-      elif [ ${mt_set} == zeshel ]; then
-        python src/taco/dataset/build_hn.py  \
-            --tokenizer_name $PLM_DIR/t5-base-scaled  \
-            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
-            --qrels $RAW_DIR/train.qrel.tsv \
-            --queries $train_query_path \
-            --collection $train_corpus_path \
-            --save_to $PROCESSED_DIR \
-            --template "Title: <title> Text: <text>" \
-            --num_hards 32 \
-            --num_rands 32 \
-            --split train \
-            --seed ${hn_iter} \
-            --use_doc_id_map \
-            --cache_dir $CACHE_DIR \
-            --shuffle_negatives
-        else
+    if [ $hn_iter != 3 ]; then
+      echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
+      if [ $hn_iter != 0 ]; then
+        if [ ${mt_set} == zeshel ]; then
+          echo " build val hard negatives for zeshel"
           python src/taco/dataset/build_hn.py  \
-            --tokenizer_name $PLM_DIR/t5-base-scaled  \
-            --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
-            --qrels $RAW_DIR/train.qrel.tsv \
-            --queries $train_query_path \
-            --collection $train_corpus_path \
-            --save_to $PROCESSED_DIR \
-            --template "Title: <title> Text: <text>" \
-            --num_hards 32 \
-            --num_rands 32 \
-            --split train \
-            --seed ${hn_iter} \
-            --shuffle_negatives \
-            --cache_dir $CACHE_DIR
+              --tokenizer_name $PLM_DIR/t5-base-scaled  \
+              --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/dev.trec \
+              --qrels $RAW_DIR/dev.qrel.tsv \
+              --queries $RAW_DIR/dev.query.txt \
+              --collection $dev_corpus_path \
+              --save_to $PROCESSED_DIR \
+              --template "Title: <title> Text: <text>" \
+              --num_hards 32 \
+              --num_rands 32 \
+              --split dev \
+              --seed 42 \
+              --use_doc_id_map \
+              --cache_dir $CACHE_DIR
+  #            --shuffle_negatives
         fi
+        echo "building train hard negatives of hn_iter ${hn_iter} for ${mt_set} ..."
+        if [ ${mt_set} == fever ]; then
+          python src/taco/dataset/build_hn.py  \
+              --tokenizer_name $PLM_DIR/t5-base-scaled  \
+              --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+              --qrels $RAW_DIR/train.qrel.tsv \
+              --queries $train_query_path \
+              --collection $train_corpus_path \
+              --save_to $PROCESSED_DIR \
+              --template "Title: <title> Text: <text>" \
+              --num_hards 32 \
+              --num_rands 32 \
+              --split train \
+              --seed ${hn_iter} \
+              --cache_dir $CACHE_DIR
+  #            --shuffle_negatives \
+  #            --use_doc_id_map \
+        elif [ ${mt_set} == zeshel ]; then
+          python src/taco/dataset/build_hn.py  \
+              --tokenizer_name $PLM_DIR/t5-base-scaled  \
+              --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+              --qrels $RAW_DIR/train.qrel.tsv \
+              --queries $train_query_path \
+              --collection $train_corpus_path \
+              --save_to $PROCESSED_DIR \
+              --template "Title: <title> Text: <text>" \
+              --num_hards 32 \
+              --num_rands 32 \
+              --split train \
+              --seed ${hn_iter} \
+              --use_doc_id_map \
+              --cache_dir $CACHE_DIR
+  #            --shuffle_negatives
+          else
+            python src/taco/dataset/build_hn.py  \
+              --tokenizer_name $PLM_DIR/t5-base-scaled  \
+              --hn_file $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec \
+              --qrels $RAW_DIR/train.qrel.tsv \
+              --queries $train_query_path \
+              --collection $train_corpus_path \
+              --save_to $PROCESSED_DIR \
+              --template "Title: <title> Text: <text>" \
+              --num_hards 32 \
+              --num_rands 32 \
+              --split train \
+              --seed ${hn_iter} \
+              --shuffle_negatives \
+              --cache_dir $CACHE_DIR
+          fi
 
-#      echo "removing training trec file of ${mt_set}"
-#      rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
-      echo "splitting ${mt_set} hn file"
-      if [ ${mt_set} == zeshel ]; then
-        mv $PROCESSED_DIR/train_all.jsonl  $PROCESSED_DIR/train.jsonl
-        echo "splitting zeshel dev hn file"
-        tail -n 500 $PROCESSED_DIR/dev_all.jsonl > $PROCESSED_DIR/val.jsonl
-      else
-        tail -n 500 $PROCESSED_DIR/train_all.jsonl > $PROCESSED_DIR/val.jsonl
-        head -n -500 $PROCESSED_DIR/train_all.jsonl > $PROCESSED_DIR/train.jsonl
-        rm $PROCESSED_DIR/train_all.jsonl
+  #      echo "removing training trec file of ${mt_set}"
+  #      rm $RESULT_DIR/${mt_set}/hn_iter_${hn_iter}/train.trec
+        echo "splitting ${mt_set} hn file"
+        if [ ${mt_set} == zeshel ]; then
+          mv $PROCESSED_DIR/train_all.jsonl  $PROCESSED_DIR/train.jsonl
+          echo "splitting zeshel dev hn file"
+          tail -n 500 $PROCESSED_DIR/dev_all.jsonl > $PROCESSED_DIR/val.jsonl
+        else
+          tail -n 500 $PROCESSED_DIR/train_all.jsonl > $PROCESSED_DIR/val.jsonl
+          head -n -500 $PROCESSED_DIR/train_all.jsonl > $PROCESSED_DIR/train.jsonl
+          rm $PROCESSED_DIR/train_all.jsonl
+        fi
       fi
     fi
   done
 
-#  if [ $hn_iter != -1 ]; then
-  echo "start hn training for for episode-${hn_iter} ..."
+  if [ $hn_iter != 3 ]; then
+    echo "start hn training for for episode-${hn_iter} ..."
 
-  torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
-      --output_dir $MODEL_DIR/hn_iter_${new_hn_iter}  \
-      --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter}  \
-      --do_train  \
-      --eval_delay $eval_delay \
-      --save_strategy epoch \
-      --evaluation_strategy epoch \
-      --logging_steps $log_step \
-      --mt_train_paths $mt_train_paths  \
-      --mt_eval_paths $mt_eval_paths \
-      --fp16  \
-      --per_device_train_batch_size $bsz  \
-      --mt_train_n_passages $mt_n_passages \
-      --learning_rate $lr  \
-      --q_max_lens $max_q_lens  \
-      --p_max_lens $max_p_lens \
-      --task_names $task_names \
-      --num_train_epochs $epoch_per_hn  \
-      --epochs_per_hn $epoch_per_hn \
-      --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
-      --negatives_x_device True \
-      --remove_unused_columns False \
-      --overwrite_output_dir True \
-      --dataloader_num_workers 0 \
-      --multi_label False \
-      --in_batch_negatives True \
-      --pooling first \
-      --positive_passage_no_shuffle True \
-      --negative_passage_no_shuffle True \
-      --add_rand_negs False \
-      --encoder_only False \
-      --save_total_limit 2 \
-      --load_best_model_at_end False \
-      --metric_for_best_model loss \
-      --up_sample True \
-      --weight_method $mt_method \
-      --select_all True \
-      --multi_mix_temp 4.0 \
-      --log_gnorm False \
-      --beta_taco 0.999 \
-      --tau_taco 2 \
-      --beta_gn 1.5 \
-      --beta_cgd 0.25 \
-      --tau_cgd 100 \
-      --norm_grad True \
-      --norm_ipt True \
-      --hard_negative_mining False \
-      --rands_ratio $rands_ratio \
-      --add_query_task_prefix True \
-      --data_cache_dir $CACHE_DIR \
-      --total_iter_num $num_hn_iters \
-      --iter_num $hn_iter
-#        --resume_from_checkpoint $resume \
-  echo "clean cache dir ... "
-  rm -rf $CACHE_DIR/json/*
-#  fi
+    torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
+        --output_dir $MODEL_DIR/hn_iter_${new_hn_iter}  \
+        --model_name_or_path $MODEL_DIR/hn_iter_${hn_iter}  \
+        --do_train  \
+        --eval_delay $eval_delay \
+        --save_strategy epoch \
+        --evaluation_strategy epoch \
+        --logging_steps $log_step \
+        --mt_train_paths $mt_train_paths  \
+        --mt_eval_paths $mt_eval_paths \
+        --fp16  \
+        --per_device_train_batch_size $bsz  \
+        --mt_train_n_passages $mt_n_passages \
+        --learning_rate $lr  \
+        --q_max_lens $max_q_lens  \
+        --p_max_lens $max_p_lens \
+        --task_names $task_names \
+        --num_train_epochs $epoch_per_hn  \
+        --epochs_per_hn $epoch_per_hn \
+        --logging_dir $LOG_DIR/hn_iter_${hn_iter}  \
+        --negatives_x_device True \
+        --remove_unused_columns False \
+        --overwrite_output_dir True \
+        --dataloader_num_workers 0 \
+        --multi_label False \
+        --in_batch_negatives True \
+        --pooling first \
+        --positive_passage_no_shuffle True \
+        --negative_passage_no_shuffle True \
+        --add_rand_negs False \
+        --encoder_only False \
+        --save_total_limit 2 \
+        --load_best_model_at_end False \
+        --metric_for_best_model loss \
+        --up_sample True \
+        --weight_method $mt_method \
+        --select_all True \
+        --multi_mix_temp 4.0 \
+        --log_gnorm False \
+        --beta_taco 0.999 \
+        --tau_taco 2 \
+        --beta_gn 1.5 \
+        --beta_cgd 0.25 \
+        --tau_cgd 100 \
+        --norm_grad True \
+        --norm_ipt True \
+        --hard_negative_mining False \
+        --rands_ratio $rands_ratio \
+        --add_query_task_prefix True \
+        --data_cache_dir $CACHE_DIR \
+        --total_iter_num $num_hn_iters \
+        --iter_num $hn_iter
+  #        --resume_from_checkpoint $resume \
+    echo "clean cache dir ... "
+    rm -rf $CACHE_DIR/json/*
+  fi
 
   for mt_set in ${mt_sets[@]}
   do

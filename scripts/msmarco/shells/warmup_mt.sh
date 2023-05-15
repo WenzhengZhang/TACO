@@ -12,8 +12,8 @@ LOG_DIR=$TACO_DIR"/logs/warmup_mt/mt_msmarco/"
 EMBEDDING_DIR=$TACO_DIR"/embeddings/warmup_mt/mt_msmarco/"
 RESULT_DIR=$TACO_DIR"/results/warmup_mt/mt_msmarco/"
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-#ANCE_PROCESSED_DIR=$DATA_DIR"ance_hn_mt/mt_msmarco/processed/naive/"
-ANCE_MODEL_DIR=$TACO_DIR"/model/ance_hn_mt/mt_msmarco/naive/"
+#ANCE_PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/naive/"
+ANCE_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/"
 mkdir -p $TACO_DIR
 mkdir -p $PLM_DIR
 mkdir -p $MODEL_DIR
@@ -146,15 +146,15 @@ do
   if [ ${mt_set} == nq ]; then
     RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
     PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/bm25/
-    ANCE_PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0/
+    ANCE_PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0/
   elif [ ${mt_set} == fever ]; then
     RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
     PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/bm25/
-    ANCE_PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0/
+    ANCE_PROCESSED_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0/
   else
     RAW_DIR=$DATA_DIR/${mt_set}/raw/
     PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/bm25/
-    ANCE_PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0/
+    ANCE_PROCESSED_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0/
   fi
   mkdir -p $ANCE_PROCESSED_DIR
   if [ ${mt_set} == zeshel ]; then
@@ -243,8 +243,8 @@ do
           --split dev \
           --seed 42 \
           --use_doc_id_map \
-          --cache_dir $CACHE_DIR \
-          --shuffle_negatives
+          --cache_dir $CACHE_DIR
+#          --shuffle_negatives
 
     fi
 
@@ -349,8 +349,8 @@ do
         --split train \
         --seed 42 \
         --cache_dir $CACHE_DIR \
-        --use_doc_id_map \
-        --shuffle_negatives
+        --use_doc_id_map
+#        --shuffle_negatives
   #        --add_rand_negs \
     elif [ ${mt_set} == fever ]; then
        python src/taco/dataset/build_hn.py  \
@@ -365,8 +365,8 @@ do
         --num_rands 32 \
         --split train \
         --seed 42 \
-        --cache_dir $CACHE_DIR \
-        --shuffle_negatives
+        --cache_dir $CACHE_DIR
+#        --shuffle_negatives
   #        --use_doc_id_map \
   #        --add_rand_negs \
     else
