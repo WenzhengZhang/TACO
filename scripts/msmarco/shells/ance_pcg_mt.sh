@@ -1,8 +1,9 @@
 #!/bin/bash
 HOME_DIR=$1
 WARM_MODEL_DIR=$2
+CACHE_DIR=$3
 #HOME_DIR="/common/users/wz283/projects/"
-CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
+#CACHE_DIR="/common/users/wz283/hf_dataset_cache/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
