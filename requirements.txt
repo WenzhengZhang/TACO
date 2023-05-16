@@ -11,3 +11,4 @@ spacy==3.5.1
 pyserini==0.20.0
 tokenizers==0.13.2
 wget
+beir
