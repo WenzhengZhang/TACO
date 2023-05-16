@@ -1,6 +1,6 @@
 #!/bin/bash
-
-HOME_DIR="/common/users/wz283/projects/"
+HOME_DIR=$1
+#HOME_DIR="/common/users/wz283/projects/"
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
