@@ -58,7 +58,7 @@ p_len=160
 log_step=100
 bsz=20
 n_passages=8
-infer_bsz=4096
+infer_bsz=2048
 #mt_method="naive"
 rands_ratio=0.5
 n_gpu=16
@@ -69,7 +69,7 @@ last_hn_iter=3
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=2; hn_iter<4; hn_iter++))
+for ((hn_iter=3; hn_iter<4; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -131,7 +131,7 @@ do
     max_p_len=160
     n_passage=8
 
-    if [ $hn_iter == -1 ]; then
+    if [ $hn_iter == 3 ]; then
       echo "initial processed data should be obtained after warmup training"
       mkdir -p $PREFIX_PROCESSED
       if [ -d $PROCESSED_DIR ]; then
@@ -151,7 +151,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 2 ]; then
+    if [ $hn_iter != 3 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
