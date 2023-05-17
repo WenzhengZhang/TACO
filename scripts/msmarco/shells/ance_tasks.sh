@@ -252,6 +252,8 @@ do
   #        --resume_from_checkpoint $resume \
     echo "clean cache dir ... "
     rm -rf $CACHE_DIR/json/*
+    echo "remove checkpoint folder ... "
+    rm -rf $MODEL_DIR/${mt_set}/hn_iter_${new_hn_iter}/checkpoint-*
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
       PROCESSED_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_tasks/mt_msmarco/${mt_method}/hn_iter_${new_hn_iter}/
