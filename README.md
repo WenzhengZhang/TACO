@@ -81,11 +81,23 @@ $DATA_DIR
 - Day6: discrete dense retrieval
 
 # Install Faiss-gpu
-For A100 CUDA-11, we need to install faiss-gpu via conda instead of pip
+For A100 CUDA-11, we need to install faiss-gpu via conda or specific pip wheels
+
+- via conda
 
 ```
 # check your cudatoolkit
 conda search cudatoolkit
 # install faiss-gpu 
 conda install -c pytorch faiss-gpu cudatoolkit=11.3.1
+```
+
+- via pip
+```
+# download faiss-gpu pip cuda-11 wheel
+wget https://github.com/kyamagu/faiss-wheels/releases/download/v1.7.3/faiss_gpu-1.7.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+
+# pip install
+python -m pip install faiss_gpu-1.7.3-cp38-cp38-manylinux_2_17_x86_64.manylinux2014_x86_64.whl
+
 ```
