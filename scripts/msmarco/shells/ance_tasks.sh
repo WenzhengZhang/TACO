@@ -30,7 +30,8 @@ mkdir -p $EVAL_DIR
 #mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
 export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7
-mt_sets=(nq fever)
+#mt_sets=(nq fever)
+mt_sets=(msmarco zeshel)
 
 SAVE_STEP=10000
 EVAL_STEP=300
@@ -50,9 +51,10 @@ num_hn_iters=8
 epoch_per_hn=1
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
+last_hn_iter=3
 
 
-for ((hn_iter=1; hn_iter<4; hn_iter++))
+for ((hn_iter=0; hn_iter<4; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1

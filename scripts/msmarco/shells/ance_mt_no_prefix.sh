@@ -63,6 +63,7 @@ num_hn_iters=8
 epoch_per_hn=1
 let last_hn_iter=${num_hn_iters}-1
 echo "last hn iter ${last_hn_iter}"
+last_hn_iter=3
 
 
 for ((hn_iter=0; hn_iter<4; hn_iter++))
