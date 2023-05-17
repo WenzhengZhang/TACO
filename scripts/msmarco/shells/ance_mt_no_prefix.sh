@@ -291,6 +291,8 @@ do
   #        --resume_from_checkpoint $resume \
     echo "clean cache dir ... "
     rm -rf $CACHE_DIR/json/*
+    echo "remove checkpoint folder ... "
+    rm -rf $MODEL_DIR/hn_iter_${new_hn_iter}/checkpoint-*
   fi
 
   for mt_set in ${mt_sets[@]}
