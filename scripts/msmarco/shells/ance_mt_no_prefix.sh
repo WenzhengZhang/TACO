@@ -92,18 +92,18 @@ do
     fi
     if [ ${mt_set} == nq ]; then
       RAW_DIR=$DATA_DIR/kilt/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/kilt/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0
       PREFIX_PROCESSED=$DATA_DIR/kilt/${mt_set}/processed/ance_no_prefix_mt/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     elif [ ${mt_set} == fever ]; then
       RAW_DIR=$DATA_DIR/beir/${mt_set}/raw/
-      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/beir/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0
       PREFIX_PROCESSED=$DATA_DIR/beir/${mt_set}/processed/ance_no_prefix_mt/mt_msmarco/${mt_method}/
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     else
       RAW_DIR=$DATA_DIR/${mt_set}/raw/
       PREFIX_PROCESSED=$DATA_DIR/${mt_set}/processed/ance_no_prefix_mt/mt_msmarco/${mt_method}/
-      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_hn_mt/mt_msmarco/naive/hn_iter_0
+      NAIVE_INIT_DIR=$DATA_DIR/${mt_set}/processed/ance_mt/mt_msmarco/naive/hn_iter_0
       PROCESSED_DIR=$PREFIX_PROCESSED/hn_iter_${hn_iter}/
     fi
     if [ ${mt_set} == zeshel ]; then
