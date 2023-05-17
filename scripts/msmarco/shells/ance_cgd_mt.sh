@@ -7,14 +7,14 @@ CACHE_DIR=$3
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"taco
+MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"cgd
 #WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
 #WARM_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/hn_iter_3/"
 DATA_DIR=$TACO_DIR"/data/"
 #RAW_DIR=$DATA_DIR"/raw/"
 #PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 LOG_DIR=$TACO_DIR"/logs/ance_mt/mt_msmarco/"cgd
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"taco
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"cgd
 RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"cgd
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
 #PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"taco
@@ -45,7 +45,7 @@ mkdir -p $RESULT_DIR
 mkdir -p $EVAL_DIR
 #mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+export CUDA_VISIBLE_DEVICES=8,9,10,11,12,13,14,15
 mt_sets=(msmarco nq fever zeshel)
 
 SAVE_STEP=10000
@@ -61,7 +61,7 @@ n_passages=8
 infer_bsz=2048
 #mt_method="naive"
 rands_ratio=0.5
-n_gpu=16
+n_gpu=8
 num_hn_iters=8
 epoch_per_hn=1
 #let last_hn_iter=${num_hn_iters}-1

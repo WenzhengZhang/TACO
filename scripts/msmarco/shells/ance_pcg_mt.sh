@@ -7,17 +7,17 @@ CACHE_DIR=$3
 CODE_DIR=$HOME_DIR"/TACO/"
 TACO_DIR=$HOME_DIR"/taco_data/"
 PLM_DIR=$TACO_DIR"/plm/"
-MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"taco
+MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/"pcg
 #WARM_MODEL_DIR=$TACO_DIR"/model/warmup_mt/mt_msmarco/"
 #WARM_MODEL_DIR=$TACO_DIR"/model/ance_mt/mt_msmarco/naive/hn_iter_3/"
 DATA_DIR=$TACO_DIR"/data/"
 #RAW_DIR=$DATA_DIR"/raw/"
 #PROCESSED_DIR=$DATA_DIR"/processed/bm25/"
 LOG_DIR=$TACO_DIR"/logs/ance_mt/mt_msmarco/"pcg
-EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"taco
+EMBEDDING_DIR=$TACO_DIR"/embeddings/ance_mt/mt_msmarco/"pcg
 RESULT_DIR=$TACO_DIR"/results/ance_mt/mt_msmarco/"pcg
 EVAL_DIR=$TACO_DIR"/metrics/trec/trec_eval-9.0.7/trec_eval-9.0.7/"
-#PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"taco
+#PROCESSED_DIR=$DATA_DIR"ance_mt/mt_msmarco/processed/"pcg
 if [ -d $MODEL_DIR/hn_iter_3 ]; then
   echo "$MODEL_DIR/hn_iter_3 is not empty"
 else
@@ -45,7 +45,7 @@ mkdir -p $RESULT_DIR
 mkdir -p $EVAL_DIR
 #mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8
 mt_sets=(msmarco nq fever zeshel)
 
 SAVE_STEP=10000
@@ -56,12 +56,12 @@ epoch=1
 lr=5e-6
 p_len=160
 log_step=100
-bsz=20
+bsz=24
 n_passages=8
 infer_bsz=2048
 #mt_method="naive"
 rands_ratio=0.5
-n_gpu=16
+n_gpu=8
 num_hn_iters=8
 epoch_per_hn=1
 #let last_hn_iter=${num_hn_iters}-1
@@ -69,7 +69,7 @@ last_hn_iter=3
 echo "last hn iter ${last_hn_iter}"
 
 
-for ((hn_iter=2; hn_iter<4; hn_iter++))
+for ((hn_iter=3; hn_iter<4; hn_iter++))
 do
   echo "ance episode $hn_iter"
   let new_hn_iter=$hn_iter+1
@@ -131,7 +131,7 @@ do
     max_p_len=160
     n_passage=8
 
-    if [ $hn_iter == -1 ]; then
+    if [ $hn_iter == 3 ]; then
       echo "initial processed data should be obtained after warmup training"
       mkdir -p $PREFIX_PROCESSED
       if [ -d $PROCESSED_DIR ]; then
@@ -151,7 +151,7 @@ do
     mt_n_passages+="$delimiter"$n_passages
 
     echo "${mt_set} ance get train hard negatives for hn_iter ${hn_iter}"
-    if [ $hn_iter != 2 ]; then
+    if [ $hn_iter != 3 ]; then
       if [ ${mt_set} == zeshel ]; then
         echo " build val hard negatives for zeshel"
         python src/taco/dataset/build_hn.py  \
