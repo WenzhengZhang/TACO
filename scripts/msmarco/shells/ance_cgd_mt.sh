@@ -45,7 +45,7 @@ mkdir -p $RESULT_DIR
 mkdir -p $EVAL_DIR
 #mkdir -p $ANCE_MODEL_DIR
 #mkdir -p $ANCE_PROCESSED_DIR
-export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8
+export CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15
 mt_sets=(msmarco nq fever zeshel)
 
 SAVE_STEP=10000
@@ -56,12 +56,12 @@ epoch=1
 lr=5e-6
 p_len=160
 log_step=100
-bsz=54
+bsz=44
 n_passages=8
 infer_bsz=2048
 #mt_method="naive"
 rands_ratio=0.5
-n_gpu=8
+n_gpu=16
 num_hn_iters=8
 epoch_per_hn=1
 #let last_hn_iter=${num_hn_iters}-1
