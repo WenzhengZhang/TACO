@@ -291,8 +291,8 @@ do
         --total_iter_num $num_hn_iters \
         --iter_num $hn_iter
   #        --resume_from_checkpoint $resume \
-    echo "clean cache dir ... "
-    rm -rf $CACHE_DIR/json/*
+#    echo "clean cache dir ... "
+#    rm -rf $CACHE_DIR/json/*
     echo "remove checkpoint folder ... "
     rm -rf $MODEL_DIR/hn_iter_${new_hn_iter}/checkpoint-*
   fi
