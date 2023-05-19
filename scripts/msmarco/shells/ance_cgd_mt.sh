@@ -56,7 +56,7 @@ epoch=1
 lr=5e-6
 p_len=160
 log_step=100
-bsz=54
+bsz=24
 n_passages=8
 infer_bsz=4096
 #mt_method="naive"
@@ -235,7 +235,7 @@ do
     fi
   done
 
-  if [ $hn_iter != 3 ]; then
+  if [ $hn_iter != 2 ]; then
     echo "start hn training for for episode-${hn_iter} ..."
 
     torchrun --nproc_per_node=$n_gpu --standalone --nnodes=1 src/taco/driver/train_mt.py \
