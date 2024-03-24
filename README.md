@@ -53,7 +53,6 @@ For ZESHEL, you need to download the raw data and bm25 candidates from [here
 - standard dense retrieval
     - hard negative mining: unify ANCE with Hard-nce style, the only
      difference is optimizer state
-    - multi-label retrieval 
 - multi-task retrieval
     - PCG
     - CGD
